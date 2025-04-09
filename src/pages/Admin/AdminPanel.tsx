@@ -17,6 +17,7 @@ import AddContentModal from '@/components/AddContentModal';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import AddYouTubeChannel from '@/components/AddYouTubeChannel';
 import AddCTFComponent from '@/components/AddCTFComponent';
+import { useNavigate } from 'react-router-dom';
 
 const AdminPanel = () => {
   const { 
@@ -36,6 +37,8 @@ const AdminPanel = () => {
     type: 'code',
     title: ''
   });
+  
+  const navigate = useNavigate();
 
   // Redirect non-admin users
   if (!currentUser?.isAdmin) {
@@ -236,6 +239,7 @@ const AdminPanel = () => {
                   
                   <div 
                     className="bg-card hover:bg-card/90 border border-border rounded-lg p-4 cursor-pointer"
+                    onClick={() => navigate('/admin/manage-posts')}
                   >
                     <div className="flex items-center mb-2">
                       <MessageSquare size={18} className="mr-2 text-primary" />

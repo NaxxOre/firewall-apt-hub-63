@@ -30,8 +30,7 @@ const formSchema = z.object({
 });
 
 const AddCategoryContent: React.FC<AddCategoryContentProps> = ({ type = 'code', closeModal }) => {
-  const { addCodeSnippet, addWriteUp, addTestingTool, currentUser, 
-          deleteCodeSnippet, deleteWriteUp, deleteTestingTool } = useStore();
+  const { addCodeSnippet, addWriteUp, addTestingTool, currentUser } = useStore();
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -59,7 +58,7 @@ const AddCategoryContent: React.FC<AddCategoryContentProps> = ({ type = 'code', 
         addCodeSnippet({
           title: values.title,
           code: values.code,
-          content: values.code, // Add content property
+          content: values.code, // This is needed by the TypeScript type definition
           categoryId: values.categoryId,
           isPublic: currentUser?.isAdmin ? values.isPublic : true,
         });
@@ -74,7 +73,7 @@ const AddCategoryContent: React.FC<AddCategoryContentProps> = ({ type = 'code', 
         addWriteUp({
           title: values.title,
           link: values.link,
-          url: values.link, // Add url property
+          url: values.link, // This is needed by the TypeScript type definition
           description: values.description || '',
           categoryId: values.categoryId,
           isPublic: currentUser?.isAdmin ? values.isPublic : true,
@@ -90,7 +89,7 @@ const AddCategoryContent: React.FC<AddCategoryContentProps> = ({ type = 'code', 
         addTestingTool({
           title: values.title,
           code: values.code,
-          content: values.code, // Add content property
+          content: values.code, // This is needed by the TypeScript type definition
           description: values.description || '',
           categoryId: values.categoryId,
           isPublic: currentUser?.isAdmin ? values.isPublic : true,
@@ -117,8 +116,17 @@ const AddCategoryContent: React.FC<AddCategoryContentProps> = ({ type = 'code', 
             <FormItem>
               <FormLabel>Content Type</FormLabel>
               <Select
-                onValueChange={field.onChange}
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  // Reset form values when content type changes
+                  if (value === 'code' || value === 'tool') {
+                    form.setValue('link', '');
+                  } else if (value === 'writeup') {
+                    form.setValue('code', '');
+                  }
+                }}
                 defaultValue={field.value}
+                value={field.value}
               >
                 <FormControl>
                   <SelectTrigger className="w-full">
@@ -158,6 +166,7 @@ const AddCategoryContent: React.FC<AddCategoryContentProps> = ({ type = 'code', 
               <FormLabel>Category</FormLabel>
               <Select
                 onValueChange={field.onChange}
+                value={field.value}
                 defaultValue={field.value}
               >
                 <FormControl>
@@ -186,13 +195,15 @@ const AddCategoryContent: React.FC<AddCategoryContentProps> = ({ type = 'code', 
               <FormItem>
                 <FormLabel>{contentType === 'code' ? 'Code' : 'Tool Code'}</FormLabel>
                 <FormControl>
-                  <ScrollArea className="h-60 border rounded-md">
-                    <Textarea 
-                      placeholder={contentType === 'code' ? "Enter code snippet" : "Enter tool code"} 
-                      {...field} 
-                      className="min-h-[240px] font-mono border-0" 
-                    />
-                  </ScrollArea>
+                  <div className="border rounded-md overflow-hidden">
+                    <ScrollArea className="h-60">
+                      <Textarea 
+                        placeholder={contentType === 'code' ? "Enter code snippet" : "Enter tool code"} 
+                        {...field} 
+                        className="min-h-[240px] font-mono border-0" 
+                      />
+                    </ScrollArea>
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -224,13 +235,15 @@ const AddCategoryContent: React.FC<AddCategoryContentProps> = ({ type = 'code', 
               <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
-                  <ScrollArea className="h-32 border rounded-md">
-                    <Textarea 
-                      placeholder="Enter a description" 
-                      {...field} 
-                      className="min-h-[120px] border-0" 
-                    />
-                  </ScrollArea>
+                  <div className="border rounded-md overflow-hidden">
+                    <ScrollArea className="h-32">
+                      <Textarea 
+                        placeholder="Enter a description" 
+                        {...field} 
+                        className="min-h-[120px] border-0" 
+                      />
+                    </ScrollArea>
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>

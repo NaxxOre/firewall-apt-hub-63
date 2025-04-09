@@ -8,7 +8,6 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 
 interface AddCTFComponentProps {
@@ -17,8 +16,9 @@ interface AddCTFComponentProps {
 
 const formSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters" }),
-  type: z.enum(['link', 'teamName', 'password']),
-  content: z.string().min(1, { message: "Content is required" }),
+  link: z.string().url({ message: "Please enter a valid URL" }).or(z.string().length(0)),
+  teamName: z.string().min(1, { message: "Team name is required" }).or(z.string().length(0)),
+  password: z.string().min(1, { message: "Password is required" }).or(z.string().length(0)),
   isPublic: z.boolean().default(true),
 });
 
@@ -29,20 +29,28 @@ const AddCTFComponent: React.FC<AddCTFComponentProps> = ({ closeModal }) => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: '',
-      type: 'link',
-      content: '',
+      link: '',
+      teamName: '',
+      password: '',
       isPublic: true,
     },
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     try {
-      addCTFComponent({
+      // We'll combine the fields into a single content object
+      const ctfData = {
         title: values.title,
-        type: values.type,
-        content: values.content,
+        type: 'combined',
+        content: JSON.stringify({
+          link: values.link,
+          teamName: values.teamName,
+          password: values.password
+        }),
         isPublic: currentUser?.isAdmin ? values.isPublic : true,
-      });
+      };
+      
+      addCTFComponent(ctfData);
       
       toast.success('CTF component added successfully');
       form.reset();
@@ -72,25 +80,13 @@ const AddCTFComponent: React.FC<AddCTFComponentProps> = ({ closeModal }) => {
         
         <FormField
           control={form.control}
-          name="type"
+          name="link"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Component Type</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select component type" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="link">Link</SelectItem>
-                  <SelectItem value="teamName">Team Name</SelectItem>
-                  <SelectItem value="password">Password</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormLabel>CTF Link</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter CTF URL" {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -98,22 +94,26 @@ const AddCTFComponent: React.FC<AddCTFComponentProps> = ({ closeModal }) => {
         
         <FormField
           control={form.control}
-          name="content"
+          name="teamName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Content</FormLabel>
+              <FormLabel>Team Name</FormLabel>
               <FormControl>
-                <Input 
-                  placeholder={
-                    form.watch('type') === 'link' 
-                      ? "Enter URL" 
-                      : form.watch('type') === 'teamName' 
-                        ? "Enter team name" 
-                        : "Enter password"
-                  } 
-                  type={form.watch('type') === 'password' ? "password" : "text"}
-                  {...field} 
-                />
+                <Input placeholder="Enter team name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Password</FormLabel>
+              <FormControl>
+                <Input type="password" placeholder="Enter password" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -11,6 +11,7 @@ import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
 import NotFound from "./pages/NotFound";
 import AdminPanel from "./pages/Admin/AdminPanel";
+import ManagePosts from "./pages/Admin/ManagePosts";
 import UserPanel from "./pages/UserPanel";
 import CTF from "./pages/CTF";
 import YoutubeChannels from "./pages/YoutubeChannels";
@@ -39,6 +40,7 @@ const App = () => {
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
                   <Route path="/admin" element={<AdminPanel />} />
+                  <Route path="/admin/manage-posts" element={<ManagePosts />} />
                   <Route path="/dashboard" element={<UserPanel />} />
                   <Route path="/ctf" element={<CTF />} />
                   <Route path="/youtube-channels" element={<YoutubeChannels />} />
