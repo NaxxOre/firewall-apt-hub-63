@@ -36,12 +36,24 @@ interface AppState {
   rejectUser: (userId: string) => void;
   
   addPost: (post: Omit<Post, 'id' | 'createdAt' | 'authorId' | 'authorName'>) => void;
+  deletePost: (postId: string) => void;
+  
   addCategory: (category: Omit<Category, 'id'>) => void;
+  
   addCodeSnippet: (codeSnippet: Omit<CodeSnippet, 'id' | 'createdAt'>) => void;
+  deleteCodeSnippet: (snippetId: string) => void;
+  
   addWriteUp: (writeUp: Omit<WriteUp, 'id' | 'createdAt'>) => void;
+  deleteWriteUp: (writeUpId: string) => void;
+  
   addTestingTool: (testingTool: Omit<TestingTool, 'id' | 'createdAt'>) => void;
+  deleteTestingTool: (toolId: string) => void;
+  
   addCTFComponent: (ctfComponent: Omit<CTFComponent, 'id' | 'createdAt'>) => void;
+  deleteCTFComponent: (componentId: string) => void;
+  
   addYoutubeChannel: (channel: Omit<YoutubeChannel, 'id' | 'createdAt'>) => void;
+  deleteYoutubeChannel: (channelId: string) => void;
   
   updatePostVisibility: (postId: string, isPublic: boolean) => void;
   updateCodeSnippetVisibility: (snippetId: string, isPublic: boolean) => void;
@@ -157,6 +169,13 @@ export const useStore = create<AppState>()(
         set({ posts: [...posts, newPost] });
       },
       
+      deletePost: (postId) => {
+        const { posts } = get();
+        set({
+          posts: posts.filter((post) => post.id !== postId),
+        });
+      },
+      
       addCategory: (categoryData) => {
         const { categories } = get();
         
@@ -181,6 +200,13 @@ export const useStore = create<AppState>()(
         set({ codeSnippets: [...codeSnippets, newSnippet] });
       },
       
+      deleteCodeSnippet: (snippetId) => {
+        const { codeSnippets } = get();
+        set({
+          codeSnippets: codeSnippets.filter((snippet) => snippet.id !== snippetId),
+        });
+      },
+      
       addWriteUp: (writeUpData) => {
         const { writeUps } = get();
         
@@ -192,6 +218,13 @@ export const useStore = create<AppState>()(
         };
         
         set({ writeUps: [...writeUps, newWriteUp] });
+      },
+      
+      deleteWriteUp: (writeUpId) => {
+        const { writeUps } = get();
+        set({
+          writeUps: writeUps.filter((writeUp) => writeUp.id !== writeUpId),
+        });
       },
       
       addTestingTool: (toolData) => {
@@ -207,6 +240,13 @@ export const useStore = create<AppState>()(
         set({ testingTools: [...testingTools, newTool] });
       },
       
+      deleteTestingTool: (toolId) => {
+        const { testingTools } = get();
+        set({
+          testingTools: testingTools.filter((tool) => tool.id !== toolId),
+        });
+      },
+      
       addCTFComponent: (componentData) => {
         const { ctfComponents } = get();
         
@@ -219,6 +259,13 @@ export const useStore = create<AppState>()(
         set({ ctfComponents: [...ctfComponents, newComponent] });
       },
       
+      deleteCTFComponent: (componentId) => {
+        const { ctfComponents } = get();
+        set({
+          ctfComponents: ctfComponents.filter((component) => component.id !== componentId),
+        });
+      },
+      
       addYoutubeChannel: (channelData) => {
         const { youtubeChannels } = get();
         
@@ -229,6 +276,13 @@ export const useStore = create<AppState>()(
         };
         
         set({ youtubeChannels: [...youtubeChannels, newChannel] });
+      },
+      
+      deleteYoutubeChannel: (channelId) => {
+        const { youtubeChannels } = get();
+        set({
+          youtubeChannels: youtubeChannels.filter((channel) => channel.id !== channelId),
+        });
       },
       
       // Visibility Actions

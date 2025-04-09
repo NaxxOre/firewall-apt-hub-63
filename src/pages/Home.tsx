@@ -13,10 +13,10 @@ const Home = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between">
           <div className="md:w-1/2 mb-8 md:mb-0">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              Welcome to <span className="text-hacker-red">f!R3wA11Apt</span>
+              <span className="typing-animation text-hacker-red">Welcome to f!R3wA11Apt</span>
             </h1>
             <p className="text-xl mb-6 text-muted-foreground">
-              Your ultimate resource hub for cybersecurity and penetration testing.
+              A small CTF team from University of Information Technology sharing the improvement of your cyber security skills.
             </p>
             {!isAuthenticated ? (
               <div className="flex flex-wrap gap-4">

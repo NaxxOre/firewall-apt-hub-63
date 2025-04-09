@@ -139,15 +139,6 @@ const UserPanel = () => {
               </p>
             </div>
           </div>
-          
-          <div className="mt-8 mb-4 bg-hacker-darkgray/50 border border-border rounded-lg p-4">
-            <p className="text-sm text-yellow-400 flex items-center">
-              <span className="bg-yellow-400/20 p-1 rounded-full mr-2">
-                <Flag size={14} />
-              </span>
-              Note: As a regular user, all your content will be set to public visibility. Only admins can create private content.
-            </p>
-          </div>
         </div>
       </div>
 

@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface AddCategoryContentProps {
   type?: 'code' | 'writeup' | 'tool';
@@ -29,7 +30,8 @@ const formSchema = z.object({
 });
 
 const AddCategoryContent: React.FC<AddCategoryContentProps> = ({ type = 'code', closeModal }) => {
-  const { addCodeSnippet, addWriteUp, addTestingTool, currentUser } = useStore();
+  const { addCodeSnippet, addWriteUp, addTestingTool, currentUser, 
+          deleteCodeSnippet, deleteWriteUp, deleteTestingTool } = useStore();
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -184,11 +186,13 @@ const AddCategoryContent: React.FC<AddCategoryContentProps> = ({ type = 'code', 
               <FormItem>
                 <FormLabel>{contentType === 'code' ? 'Code' : 'Tool Code'}</FormLabel>
                 <FormControl>
-                  <Textarea 
-                    placeholder={contentType === 'code' ? "Enter code snippet" : "Enter tool code"} 
-                    {...field} 
-                    className="h-32 font-mono" 
-                  />
+                  <ScrollArea className="h-60 border rounded-md">
+                    <Textarea 
+                      placeholder={contentType === 'code' ? "Enter code snippet" : "Enter tool code"} 
+                      {...field} 
+                      className="min-h-[240px] font-mono border-0" 
+                    />
+                  </ScrollArea>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -220,7 +224,13 @@ const AddCategoryContent: React.FC<AddCategoryContentProps> = ({ type = 'code', 
               <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
-                  <Textarea placeholder="Enter a description" {...field} />
+                  <ScrollArea className="h-32 border rounded-md">
+                    <Textarea 
+                      placeholder="Enter a description" 
+                      {...field} 
+                      className="min-h-[120px] border-0" 
+                    />
+                  </ScrollArea>
                 </FormControl>
                 <FormMessage />
               </FormItem>
