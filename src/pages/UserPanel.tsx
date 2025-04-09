@@ -15,6 +15,7 @@ import AddContentModal from '@/components/AddContentModal';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import AddYouTubeChannel from '@/components/AddYouTubeChannel';
 import AddCTFComponent from '@/components/AddCTFComponent';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const UserPanel = () => {
   const { currentUser, isAuthenticated } = useStore();
@@ -154,28 +155,32 @@ const UserPanel = () => {
 
       {modalOpen.type === 'youtube' && (
         <Dialog open={modalOpen.isOpen} onOpenChange={(isOpen) => setModalOpen({ ...modalOpen, isOpen })}>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[500px] max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>Add YouTube Channel</DialogTitle>
               <DialogDescription>
                 Fill in the details below to add a new YouTube channel.
               </DialogDescription>
             </DialogHeader>
-            <AddYouTubeChannel closeModal={() => setModalOpen({ ...modalOpen, isOpen: false })} />
+            <ScrollArea className="max-h-[70vh]">
+              <AddYouTubeChannel closeModal={() => setModalOpen({ ...modalOpen, isOpen: false })} />
+            </ScrollArea>
           </DialogContent>
         </Dialog>
       )}
 
       {modalOpen.type === 'ctf' && (
         <Dialog open={modalOpen.isOpen} onOpenChange={(isOpen) => setModalOpen({ ...modalOpen, isOpen })}>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[500px] max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>Add CTF Component</DialogTitle>
               <DialogDescription>
                 Fill in the details below to add a new CTF component.
               </DialogDescription>
             </DialogHeader>
-            <AddCTFComponent closeModal={() => setModalOpen({ ...modalOpen, isOpen: false })} />
+            <ScrollArea className="max-h-[70vh]">
+              <AddCTFComponent closeModal={() => setModalOpen({ ...modalOpen, isOpen: false })} />
+            </ScrollArea>
           </DialogContent>
         </Dialog>
       )}

@@ -50,7 +50,7 @@ const AddCategoryContent: React.FC<AddCategoryContentProps> = ({ type = 'code', 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     try {
       if (contentType === 'code') {
-        if (!values.code) {
+        if (!values.code || values.code.trim() === '') {
           toast.error('Code is required for code snippets');
           return;
         }
@@ -58,7 +58,7 @@ const AddCategoryContent: React.FC<AddCategoryContentProps> = ({ type = 'code', 
         addCodeSnippet({
           title: values.title,
           code: values.code,
-          content: values.code, // This is needed by the TypeScript type definition
+          content: values.code,
           categoryId: values.categoryId,
           isPublic: currentUser?.isAdmin ? values.isPublic : true,
         });
@@ -73,7 +73,7 @@ const AddCategoryContent: React.FC<AddCategoryContentProps> = ({ type = 'code', 
         addWriteUp({
           title: values.title,
           link: values.link,
-          url: values.link, // This is needed by the TypeScript type definition
+          url: values.link,
           description: values.description || '',
           categoryId: values.categoryId,
           isPublic: currentUser?.isAdmin ? values.isPublic : true,
@@ -81,7 +81,7 @@ const AddCategoryContent: React.FC<AddCategoryContentProps> = ({ type = 'code', 
         
         toast.success('Write-up added successfully');
       } else if (contentType === 'tool') {
-        if (!values.code) {
+        if (!values.code || values.code.trim() === '') {
           toast.error('Code is required for testing tools');
           return;
         }
@@ -89,7 +89,7 @@ const AddCategoryContent: React.FC<AddCategoryContentProps> = ({ type = 'code', 
         addTestingTool({
           title: values.title,
           code: values.code,
-          content: values.code, // This is needed by the TypeScript type definition
+          content: values.code,
           description: values.description || '',
           categoryId: values.categoryId,
           isPublic: currentUser?.isAdmin ? values.isPublic : true,

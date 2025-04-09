@@ -31,7 +31,7 @@ const AddContentModal = ({ open, onOpenChange, type, title }: AddContentModalPro
             Fill in the details below to add new content.
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="max-h-[70vh]">
+        <ScrollArea className="max-h-[70vh] pr-4">
           {(type === 'code' || type === 'writeup' || type === 'tool') && (
             <AddCategoryContent type={type} closeModal={closeModal} />
           )}

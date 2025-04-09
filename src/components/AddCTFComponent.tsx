@@ -53,7 +53,7 @@ const AddCTFComponent: React.FC<AddCTFComponentProps> = ({ closeModal }) => {
       if (values.teamName) {
         addCTFComponent({
           title: `${values.title} - Team`,
-          type: 'team',
+          type: 'teamName', // Fixed: Changed 'team' to 'teamName' to match the type
           content: values.teamName,
           isPublic: currentUser?.isAdmin ? values.isPublic : true,
         });
