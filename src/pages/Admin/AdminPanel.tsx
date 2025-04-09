@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import {
   Users,
@@ -24,7 +25,8 @@ const AdminPanel = () => {
     pendingUsers,
     approveUser,
     rejectUser,
-    currentUser
+    currentUser,
+    syncPendingUsers
   } = useStore();
   
   const [activeTab, setActiveTab] = useState<'users' | 'content'>('users');
@@ -39,6 +41,13 @@ const AdminPanel = () => {
   });
   
   const navigate = useNavigate();
+
+  // Sync pending users when admin panel loads
+  useEffect(() => {
+    if (currentUser?.isAdmin) {
+      syncPendingUsers();
+    }
+  }, [currentUser, syncPendingUsers]);
 
   // Redirect non-admin users
   if (!currentUser?.isAdmin) {

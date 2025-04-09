@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { 
@@ -62,9 +61,13 @@ interface AppState {
   updateTestingToolVisibility: (toolId: string, isPublic: boolean) => void;
   updateCTFComponentVisibility: (componentId: string, isPublic: boolean) => void;
   updateYoutubeChannelVisibility: (channelId: string, isPublic: boolean) => void;
+  
+  syncPendingUsers: () => void;
 }
 
 const initialCategories = CATEGORIES;
+
+const PENDING_USERS_KEY = 'firewall-apt-pending-users';
 
 export const useStore = create<AppState>()(
   persist(
@@ -108,9 +111,11 @@ export const useStore = create<AppState>()(
       },
       
       register: async (username, email, password) => {
-        const { users, pendingUsers } = get();
+        const { users, pendingUsers, syncPendingUsers } = get();
         
-        const existingUser = [...users, ...pendingUsers].find(
+        syncPendingUsers();
+        
+        const existingUser = [...users, ...get().pendingUsers].find(
           (u) => u.email === email || u.username === username
         );
         
@@ -120,7 +125,7 @@ export const useStore = create<AppState>()(
         }
         
         const newUser: User = {
-          id: Date.now().toString(),
+          id: `pending_${Date.now().toString()}`,
           username,
           email,
           password,
@@ -129,7 +134,11 @@ export const useStore = create<AppState>()(
           createdAt: new Date(),
         };
         
-        set({ pendingUsers: [...pendingUsers, newUser] });
+        set({ pendingUsers: [...get().pendingUsers, newUser] });
+        
+        const existingPendingUsers = JSON.parse(localStorage.getItem(PENDING_USERS_KEY) || '[]');
+        localStorage.setItem(PENDING_USERS_KEY, JSON.stringify([...existingPendingUsers, newUser]));
+        
         return true;
       },
       
@@ -139,18 +148,41 @@ export const useStore = create<AppState>()(
         
         if (userToApprove) {
           const approvedUser = { ...userToApprove, isApproved: true };
+          
           set({
             users: [...users, approvedUser],
             pendingUsers: pendingUsers.filter((u) => u.id !== userId),
           });
+          
+          const existingPendingUsers = JSON.parse(localStorage.getItem(PENDING_USERS_KEY) || '[]');
+          localStorage.setItem(
+            PENDING_USERS_KEY, 
+            JSON.stringify(existingPendingUsers.filter((u: User) => u.id !== userId))
+          );
         }
       },
       
       rejectUser: (userId) => {
         const { pendingUsers } = get();
+        
         set({
           pendingUsers: pendingUsers.filter((u) => u.id !== userId),
         });
+        
+        const existingPendingUsers = JSON.parse(localStorage.getItem(PENDING_USERS_KEY) || '[]');
+        localStorage.setItem(
+          PENDING_USERS_KEY, 
+          JSON.stringify(existingPendingUsers.filter((u: User) => u.id !== userId))
+        );
+      },
+      
+      syncPendingUsers: () => {
+        try {
+          const storedPendingUsers = JSON.parse(localStorage.getItem(PENDING_USERS_KEY) || '[]');
+          set({ pendingUsers: storedPendingUsers });
+        } catch (error) {
+          console.error("Error syncing pending users:", error);
+        }
       },
       
       // Content Actions
@@ -353,7 +385,6 @@ export const useStore = create<AppState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         users: state.users,
-        pendingUsers: state.pendingUsers,
         posts: state.posts,
         categories: state.categories,
         codeSnippets: state.codeSnippets,
