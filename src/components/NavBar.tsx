@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useStore } from '@/lib/store';
-import { Menu, X, User, LogOut } from 'lucide-react';
+import { Menu, X, User, LogOut, Home } from 'lucide-react';
 import Logo from './Logo';
 import { CATEGORIES } from '@/lib/constants';
 
@@ -29,17 +29,11 @@ const NavBar = () => {
   };
 
   const mainNavItems = [
-    { name: 'Home', path: '/' },
+    { name: 'Home', path: '/', icon: Home },
     ...CATEGORIES.map(category => ({ 
       name: category.name, 
       path: `/category/${category.slug}` 
     })),
-  ];
-
-  const sideNavItems = [
-    { name: 'CTF', path: '/ctf' },
-    { name: 'Forum', path: '/forum' },
-    { name: 'YouTube', path: '/youtube-channels' }
   ];
 
   return (
@@ -121,20 +115,6 @@ const NavBar = () => {
                 {item.name}
               </Link>
             ))}
-            
-            {/* Side navigation items */}
-            <div className="pt-3 mt-3 border-t border-hacker-lightgray">
-              {sideNavItems.map((item) => (
-                <Link 
-                  key={item.path} 
-                  to={item.path} 
-                  className={`block py-2 px-4 hover:bg-secondary/50 rounded-md ${isActive(item.path)}`}
-                  onClick={closeMenu}
-                >
-                  {item.name}
-                </Link>
-              ))}
-            </div>
 
             {isAuthenticated ? (
               <>

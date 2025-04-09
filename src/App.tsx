@@ -62,7 +62,7 @@ const App = () => {
               </div>
               <footer className="bg-hacker-darkgray border-t border-hacker-lightgray py-4">
                 <div className="container mx-auto px-4 text-center text-xs text-muted-foreground">
-                  &copy; {new Date().getFullYear()} f!R3wA11Apt. All rights reserved.
+                  &copy; {new Date().getFullYear()} Welcome to f!R3wA11Apt. All rights reserved.
                 </div>
               </footer>
             </div>

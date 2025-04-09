@@ -1,13 +1,27 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useStore } from '@/lib/store';
-import { ArrowLeft, Calendar, User, Lock } from 'lucide-react';
+import { ArrowLeft, Calendar, User, Lock, MessageCircle, Send } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
+import CodeDisplayBox from '@/components/CodeDisplayBox';
+
+interface Reply {
+  id: string;
+  content: string;
+  authorName: string;
+  createdAt: string;
+}
 
 const PostDetail = () => {
   const { postId } = useParams<{ postId: string }>();
   const { posts, currentUser, isAuthenticated } = useStore();
   const navigate = useNavigate();
+  const [replyContent, setReplyContent] = useState('');
+  const [replies, setReplies] = useState<Reply[]>([]);
   
   const post = posts.find(p => p.id === postId);
   
@@ -18,6 +32,74 @@ const PostDetail = () => {
     if (!isAuthenticated) return false;
     if (currentUser?.isAdmin) return true;
     return false;
+  };
+
+  const handleAddReply = () => {
+    if (!isAuthenticated) {
+      toast.error('Please log in to reply');
+      return;
+    }
+
+    if (!replyContent.trim()) {
+      toast.error('Reply cannot be empty');
+      return;
+    }
+
+    const newReply: Reply = {
+      id: `reply-${Date.now()}`,
+      content: replyContent.trim(),
+      authorName: currentUser?.username || 'Anonymous',
+      createdAt: new Date().toISOString()
+    };
+
+    setReplies([...replies, newReply]);
+    setReplyContent('');
+    toast.success('Reply added successfully');
+  };
+
+  const renderCustomField = (field: any) => {
+    switch (field.type) {
+      case 'code':
+        return (
+          <div className="mb-4" key={field.id}>
+            <h4 className="text-sm font-medium mb-2">Code Snippet</h4>
+            <CodeDisplayBox content={field.content} maxHeight="300px" />
+          </div>
+        );
+      case 'link':
+        return (
+          <div className="mb-4" key={field.id}>
+            <h4 className="text-sm font-medium mb-2">Link</h4>
+            <a 
+              href={field.content} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-primary hover:underline text-sm inline-block"
+            >
+              {field.content}
+            </a>
+          </div>
+        );
+      case 'image':
+        return (
+          <div className="mb-4" key={field.id}>
+            <h4 className="text-sm font-medium mb-2">Image</h4>
+            <div className="border border-border rounded-md overflow-hidden">
+              <img 
+                src={field.content} 
+                alt="User provided" 
+                className="max-w-full h-auto"
+                onError={(e) => {
+                  e.currentTarget.src = 'public/placeholder.svg';
+                  e.currentTarget.alt = 'Image could not be loaded';
+                }}
+              />
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
   };
   
   if (!post) {
@@ -106,11 +188,86 @@ const PostDetail = () => {
           </div>
         </div>
         
-        <div className="p-6">
-          <div className="prose prose-invert max-w-none">
-            {/* This is a simple implementation - for production, use a markdown renderer */}
-            <p className="whitespace-pre-wrap">{post.content}</p>
+        <ScrollArea className="px-6" style={{ maxHeight: '400px' }}>
+          <div className="py-6">
+            <div className="prose prose-invert max-w-none">
+              <p className="whitespace-pre-wrap">{post.content}</p>
+            </div>
+            
+            {post.customFields && post.customFields.length > 0 && (
+              <div className="mt-6 pt-6 border-t border-border">
+                <h3 className="font-medium mb-4">Attachments & Resources</h3>
+                {post.customFields.map((field: any) => renderCustomField(field))}
+              </div>
+            )}
           </div>
+        </ScrollArea>
+        
+        <div className="border-t border-border p-6">
+          <h2 className="flex items-center text-xl font-bold mb-4">
+            <MessageCircle className="mr-2" size={20} />
+            Replies
+          </h2>
+          
+          {replies.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No replies yet. Be the first to reply!
+            </div>
+          ) : (
+            <div className="space-y-4 mb-6">
+              {replies.map(reply => (
+                <div key={reply.id} className="border border-border rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center text-sm">
+                      <User size={14} className="mr-1" />
+                      <span className="font-medium">{reply.authorName}</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(reply.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <p className="text-sm whitespace-pre-wrap">{reply.content}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {isAuthenticated ? (
+            <div className="mt-4">
+              <div className="mb-2">
+                <label htmlFor="reply" className="block text-sm font-medium mb-1">
+                  Add a reply
+                </label>
+                <Textarea
+                  id="reply"
+                  value={replyContent}
+                  onChange={(e) => setReplyContent(e.target.value)}
+                  placeholder="Write your reply here..."
+                  className="w-full p-2 bg-hacker-darkgray border border-border rounded-md"
+                  rows={3}
+                />
+              </div>
+              <div className="flex justify-end">
+                <Button 
+                  onClick={handleAddReply}
+                  className="flex items-center"
+                >
+                  <Send size={16} className="mr-1" />
+                  Post Reply
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-hacker-darkgray border border-border rounded-lg p-4 text-center">
+              <p className="text-sm mb-2">You need to be logged in to reply.</p>
+              <Link 
+                to="/login" 
+                className="text-primary hover:underline text-sm"
+              >
+                Login to join the conversation
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </div>

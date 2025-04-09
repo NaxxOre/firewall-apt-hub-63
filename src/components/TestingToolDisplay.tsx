@@ -13,7 +13,7 @@ const TestingToolDisplay: React.FC<TestingToolDisplayProps> = ({ tool }) => {
   return (
     <ContentCard title={tool.title} isPublic={tool.isPublic}>
       <div className="mb-3">
-        <CodeDisplayBox content={tool.content} />
+        <CodeDisplayBox content={tool.content} maxHeight="400px" />
       </div>
       {tool.description && (
         <p className="text-sm text-muted-foreground mt-2 mb-3">{tool.description}</p>
