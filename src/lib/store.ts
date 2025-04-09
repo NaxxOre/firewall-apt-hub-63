@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { 
@@ -52,10 +51,7 @@ interface AppState {
   updateYoutubeChannelVisibility: (channelId: string, isPublic: boolean) => void;
 }
 
-const initialCategories = CATEGORIES.map((category, index) => ({
-  id: (index + 1).toString(),
-  ...category,
-}));
+const initialCategories = CATEGORIES;
 
 export const useStore = create<AppState>()(
   persist(
@@ -154,7 +150,7 @@ export const useStore = create<AppState>()(
           ...postData,
           authorId: currentUser.id,
           authorName: currentUser.username,
-          isPublic: currentUser.isAdmin ? postData.isPublic : true, // Regular users can only create public posts
+          isPublic: currentUser.isAdmin ? postData.isPublic : true,
           createdAt: new Date(),
         };
         
@@ -178,6 +174,7 @@ export const useStore = create<AppState>()(
         const newSnippet: CodeSnippet = {
           id: Date.now().toString(),
           ...snippetData,
+          content: snippetData.code,
           createdAt: new Date(),
         };
         
@@ -190,6 +187,7 @@ export const useStore = create<AppState>()(
         const newWriteUp: WriteUp = {
           id: Date.now().toString(),
           ...writeUpData,
+          url: writeUpData.link,
           createdAt: new Date(),
         };
         
@@ -202,6 +200,7 @@ export const useStore = create<AppState>()(
         const newTool: TestingTool = {
           id: Date.now().toString(),
           ...toolData,
+          content: toolData.code,
           createdAt: new Date(),
         };
         

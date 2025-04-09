@@ -25,12 +25,14 @@ export interface Category {
   id: string;
   name: string;
   slug: string;
+  description?: string;
 }
 
 export interface CodeSnippet {
   id: string;
   title: string;
   code: string;
+  content: string; // Adding content property
   categoryId: string;
   isPublic: boolean;
   createdAt: Date;
@@ -40,6 +42,8 @@ export interface WriteUp {
   id: string;
   title: string;
   link: string;
+  url: string; // Adding url property
+  description?: string; // Adding description property
   categoryId: string;
   isPublic: boolean;
   createdAt: Date;
@@ -49,6 +53,8 @@ export interface TestingTool {
   id: string;
   title: string;
   code: string;
+  content: string; // Adding content property
+  description?: string; // Adding description property
   categoryId: string;
   isPublic: boolean;
   createdAt: Date;
@@ -68,6 +74,7 @@ export interface YoutubeChannel {
   name: string;
   url: string;
   description?: string;
+  thumbnailUrl?: string; // Adding thumbnailUrl property
   isPublic: boolean;
   createdAt: Date;
 }
