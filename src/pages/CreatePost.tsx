@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useFormik } from 'formik';
@@ -36,9 +37,9 @@ const CreatePost = () => {
         title: values.title,
         content: values.content,
         isPublic: values.isPublic,
-        imageUrls: imageDataUrls.length > 0 ? imageDataUrls : undefined,
+        imageUrls: imageDataUrls.length > 0 ? imageDataUrls : [],
         codeSnippet: values.codeSnippet || undefined,
-        externalLinks: filteredLinks.length > 0 ? filteredLinks : undefined,
+        externalLinks: filteredLinks.length > 0 ? filteredLinks : [],
         ...(postId ? { parentId: postId } : {}),
       });
       
@@ -134,10 +135,10 @@ const CreatePost = () => {
               onChange={(value) => formik.setFieldValue('codeSnippet', value)}
               theme="vs-dark"
               options={{
-                "acceptSuggestionOnEnter": "off",
-                "wordBasedSuggestions": false,
-                "suggestOnTriggerCharacters": false,
-                "tabCompletion": "off"
+                acceptSuggestionOnEnter: "off",
+                wordBasedSuggestions: false,
+                suggestOnTriggerCharacters: false,
+                tabCompletion: "off"
               }}
             />
           </div>
