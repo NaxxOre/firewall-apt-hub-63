@@ -61,14 +61,14 @@
   }
 
   .typing-container {
-    width: 230px;
+    width: 380px;
     display: inline-block;
     overflow: hidden;
     white-space: nowrap;
   }
   
   .typing-text {
-    animation: typing 3.5s steps(40, end) infinite alternate,
+    animation: typing 4s steps(40, end) infinite alternate,
                blink 0.75s step-end infinite;
     border-right: 3px solid;
     white-space: nowrap;
@@ -99,15 +99,26 @@
   
   .highlight-r {
     color: #ea384c;
-    text-shadow: 0 0 5px rgba(234, 56, 76, 0.5);
-    animation: pulse-glow 2.5s ease-in-out infinite;
+    text-shadow: 0 0 10px rgba(234, 56, 76, 0.7);
+    animation: pulse-glow 2s ease-in-out infinite;
   }
   
   .highlight-a {
     color: #ea384c;
-    text-shadow: 0 0 5px rgba(234, 56, 76, 0.5);
-    animation: pulse-glow 2.5s ease-in-out infinite;
-    animation-delay: 0.5s;
+    text-shadow: 0 0 10px rgba(234, 56, 76, 0.7);
+    animation: pulse-glow 2s ease-in-out infinite;
+    animation-delay: 0.7s;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { 
+      text-shadow: 0 0 10px rgba(234, 56, 76, 0.5);
+      color: #ea384c;
+    }
+    50% { 
+      text-shadow: 0 0 20px rgba(234, 56, 76, 0.9), 0 0 30px rgba(234, 56, 76, 0.6);
+      color: #ff5a6a;
+    }
   }
 
   .code-block {
@@ -122,3 +133,4 @@
     @apply bg-hacker-lightgray px-4 py-2 flex justify-between rounded-t-md -mt-4 -mx-4 mb-3 text-sm;
   }
 }
+
