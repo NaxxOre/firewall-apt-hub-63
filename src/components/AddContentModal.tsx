@@ -24,14 +24,14 @@ const AddContentModal = ({ open, onOpenChange, type, title }: AddContentModalPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
             Fill in the details below to add new content.
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="max-h-[70vh] pr-4">
+        <ScrollArea className="max-h-[70vh] pr-4 overflow-y-auto">
           {(type === 'code' || type === 'writeup' || type === 'tool') && (
             <AddCategoryContent type={type} closeModal={closeModal} />
           )}

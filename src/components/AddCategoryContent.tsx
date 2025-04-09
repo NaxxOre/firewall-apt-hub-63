@@ -47,7 +47,7 @@ const AddCategoryContent: React.FC<AddCategoryContentProps> = ({ type = 'code', 
 
   const contentType = form.watch('contentType');
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       if (contentType === 'code') {
         if (!values.code || values.code.trim() === '') {

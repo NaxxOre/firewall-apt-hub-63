@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useStore } from '@/lib/store';
 import { CATEGORIES } from '@/lib/constants';
-import { ChevronRight, Lock, Code, FileText, Wrench, Youtube } from 'lucide-react';
+import { ChevronRight, Lock, Code, FileText, Wrench, Youtube, ExternalLink } from 'lucide-react';
 
 const Home = () => {
   const { isAuthenticated, currentUser } = useStore();
@@ -34,7 +34,7 @@ const Home = () => {
               <span className="animate-pulse">|</span>
             </h1>
             <p className="text-xl mb-6 text-muted-foreground">
-              A small CTF team from University of Information Technology sharing the improvement of your cyber security skills.
+              A small CTF team from University of Information Technology sharing the knowledges to improve your cyber security skills.
             </p>
             {!isAuthenticated ? (
               <div className="flex flex-wrap gap-4">
@@ -71,6 +71,18 @@ const Home = () => {
                 )}
               </div>
             )}
+
+            <div className="mt-6 flex items-center">
+              <a
+                href="https://t.me/zuzip1234"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:text-primary/80 flex items-center"
+              >
+                <ExternalLink size={16} className="mr-1" />
+                Contact us on Telegram for Questions or Approval
+              </a>
+            </div>
           </div>
           <div className="md:w-1/2 bg-hacker-darkgray border border-hacker-lightgray p-6 rounded-lg">
             <div className="text-xs text-muted-foreground mb-2">// Terminal</div>

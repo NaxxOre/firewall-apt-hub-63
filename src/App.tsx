@@ -42,6 +42,7 @@ const App = () => {
                   <Route path="/admin" element={<AdminPanel />} />
                   <Route path="/admin/manage-posts" element={<ManagePosts />} />
                   <Route path="/dashboard" element={<UserPanel />} />
+                  <Route path="/user" element={<UserPanel />} />
                   <Route path="/ctf" element={<CTF />} />
                   <Route path="/youtube-channels" element={<YoutubeChannels />} />
                   <Route path="/category/:slug" element={<Category />} />
