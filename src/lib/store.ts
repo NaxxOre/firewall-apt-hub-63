@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { 
@@ -161,6 +160,10 @@ export const useStore = create<AppState>()(
         const newPost: Post = {
           id: Date.now().toString(),
           ...postData,
+          imageUrl: postData.imageUrl || undefined,
+          imageUrls: postData.imageUrls || [],
+          externalLink: postData.externalLink || undefined,
+          externalLinks: postData.externalLinks || [],
           authorId: currentUser.id,
           authorName: currentUser.username,
           isPublic: currentUser.isAdmin ? postData.isPublic : true,
@@ -172,7 +175,6 @@ export const useStore = create<AppState>()(
       
       deletePost: (postId) => {
         const { posts } = get();
-        // Delete the post and any replies to it
         set({
           posts: posts.filter((post) => post.id !== postId && post.parentId !== postId),
         });

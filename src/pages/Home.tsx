@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { CATEGORIES } from '@/lib/constants';
 import { useStore } from '@/lib/store';
 import { Shield, LockKeyhole, FileCode, BookOpen, Wrench } from 'lucide-react';
+import Terminal from '@/components/Terminal';
 
 const Home = () => {
   const { isAuthenticated } = useStore();
@@ -17,8 +17,13 @@ const Home = () => {
             Welcome to f!R3wA11Apt<span className="typing-animation">|</span>
           </h1>
           <p className="text-lg mb-6">
-            Your central hub for cybersecurity resources, CTF tools, and penetration testing guides.
+            We are burmese ctf team from University of Information Technology and we are learning and sharing and seeking knowledges to improve our and your cybersecurity skills to the next level.
           </p>
+          
+          <div className="my-8">
+            <Terminal />
+          </div>
+          
           {!isAuthenticated && (
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
