@@ -13,7 +13,7 @@ const CodeSnippetDisplay: React.FC<CodeSnippetDisplayProps> = ({ snippet }) => {
   return (
     <ContentCard title={snippet.title} isPublic={snippet.isPublic}>
       <div className="mb-3">
-        <CodeDisplayBox content={snippet.content} maxHeight="400px" />
+        <CodeDisplayBox content={snippet.content} />
       </div>
       {snippet.description && (
         <p className="text-sm text-muted-foreground mt-2 mb-3">{snippet.description}</p>
