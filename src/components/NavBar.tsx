@@ -28,6 +28,20 @@ const NavBar = () => {
     return location.pathname === path ? 'text-primary border-primary' : 'text-foreground border-transparent';
   };
 
+  const mainNavItems = [
+    { name: 'Home', path: '/' },
+    ...CATEGORIES.map(category => ({ 
+      name: category.name, 
+      path: `/category/${category.slug}` 
+    })),
+  ];
+
+  const sideNavItems = [
+    { name: 'CTF', path: '/ctf' },
+    { name: 'Forum', path: '/forum' },
+    { name: 'YouTube', path: '/youtube-channels' }
+  ];
+
   return (
     <header className="sticky top-0 bg-hacker-dark z-40 border-b border-secondary">
       <div className="container mx-auto px-4">
@@ -46,32 +60,17 @@ const NavBar = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-4 xl:space-x-6">
-            <Link to="/" className={`py-1 px-2 font-medium hover:text-primary border-b-2 transition-colors ${isActive('/')}`}>
-              Home
-            </Link>
-            
-            {CATEGORIES.map((category) => (
-              <Link
-                key={category.slug}
-                to={`/category/${category.slug}`}
-                className={`py-1 px-2 font-medium hover:text-primary border-b-2 transition-colors ${isActive(`/category/${category.slug}`)}`}
+            {/* Main navigation items */}
+            {mainNavItems.map((item) => (
+              <Link 
+                key={item.path} 
+                to={item.path} 
+                className={`py-1 px-2 font-medium hover:text-primary border-b-2 transition-colors ${isActive(item.path)}`}
               >
-                {category.name}
+                {item.name}
               </Link>
             ))}
             
-            <Link to="/ctf" className={`py-1 px-2 font-medium hover:text-primary border-b-2 transition-colors ${isActive('/ctf')}`}>
-              CTF
-            </Link>
-            
-            <Link to="/forum" className={`py-1 px-2 font-medium hover:text-primary border-b-2 transition-colors ${isActive('/forum')}`}>
-              Forum
-            </Link>
-            
-            <Link to="/youtube-channels" className={`py-1 px-2 font-medium hover:text-primary border-b-2 transition-colors ${isActive('/youtube-channels')}`}>
-              YouTube
-            </Link>
-
             {isAuthenticated ? (
               <div className="relative ml-2 xl:ml-4 flex items-center space-x-2 xl:space-x-4">
                 <Link 
@@ -111,48 +110,31 @@ const NavBar = () => {
         {/* Mobile Navigation */}
         {isOpen && (
           <nav className="lg:hidden py-4 space-y-3">
-            <Link 
-              to="/" 
-              className={`block py-2 px-4 hover:bg-secondary/50 rounded-md ${isActive('/')}`}
-              onClick={closeMenu}
-            >
-              Home
-            </Link>
-            
-            {CATEGORIES.map((category) => (
-              <Link
-                key={category.slug}
-                to={`/category/${category.slug}`}
-                className={`block py-2 px-4 hover:bg-secondary/50 rounded-md ${isActive(`/category/${category.slug}`)}`}
+            {/* Main navigation items */}
+            {mainNavItems.map((item) => (
+              <Link 
+                key={item.path} 
+                to={item.path} 
+                className={`block py-2 px-4 hover:bg-secondary/50 rounded-md ${isActive(item.path)}`}
                 onClick={closeMenu}
               >
-                {category.name}
+                {item.name}
               </Link>
             ))}
             
-            <Link 
-              to="/ctf" 
-              className={`block py-2 px-4 hover:bg-secondary/50 rounded-md ${isActive('/ctf')}`}
-              onClick={closeMenu}
-            >
-              CTF
-            </Link>
-            
-            <Link 
-              to="/forum" 
-              className={`block py-2 px-4 hover:bg-secondary/50 rounded-md ${isActive('/forum')}`}
-              onClick={closeMenu}
-            >
-              Forum
-            </Link>
-            
-            <Link 
-              to="/youtube-channels" 
-              className={`block py-2 px-4 hover:bg-secondary/50 rounded-md ${isActive('/youtube-channels')}`}
-              onClick={closeMenu}
-            >
-              YouTube
-            </Link>
+            {/* Side navigation items */}
+            <div className="pt-3 mt-3 border-t border-hacker-lightgray">
+              {sideNavItems.map((item) => (
+                <Link 
+                  key={item.path} 
+                  to={item.path} 
+                  className={`block py-2 px-4 hover:bg-secondary/50 rounded-md ${isActive(item.path)}`}
+                  onClick={closeMenu}
+                >
+                  {item.name}
+                </Link>
+              ))}
+            </div>
 
             {isAuthenticated ? (
               <>
