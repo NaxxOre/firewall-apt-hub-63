@@ -1,8 +1,9 @@
 
 import React from 'react';
 import { useStore } from '@/lib/store';
-import { useNavigate } from 'react-router-dom';
-import { User, LogOut, MessageSquare } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { User, LogOut, MessageSquare, Layout } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const Profile = () => {
   const { currentUser, isAuthenticated, logout, posts } = useStore();
@@ -48,7 +49,16 @@ const Profile = () => {
               )}
             </div>
             
-            <div className="border-t border-border pt-4">
+            <div className="border-t border-border pt-4 flex flex-col gap-3">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => navigate(currentUser.isAdmin ? '/admin' : '/dashboard')}
+              >
+                <Layout size={16} className="mr-2" />
+                {currentUser.isAdmin ? 'Admin Dashboard' : 'User Dashboard'}
+              </Button>
+              
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center justify-center bg-primary/20 hover:bg-primary/30 text-primary py-2 px-3 rounded-md transition-colors"

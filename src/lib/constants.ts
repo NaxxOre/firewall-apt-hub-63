@@ -1,8 +1,8 @@
 
 export const ADMIN_USER = {
-  username: "mrbuff",
-  email: "aung4928ato@gmail.com",
-  password: "Mrbuff1234"
+  username: "admin",
+  email: "admin2179@gmail.com",
+  password: "admin2179"
 };
 
 export const CATEGORIES = [
