@@ -111,8 +111,10 @@ const CreatePost = () => {
           title: values.title,
           content: values.content,
           isPublic: values.isPublic,
-          imageUrls: imageDataUrls,
+          imageUrl: imageDataUrls.length > 0 ? imageDataUrls[0] : undefined,
+          imageUrls: imageDataUrls.length > 0 ? imageDataUrls : undefined,
           codeSnippet: values.codeSnippet || undefined,
+          externalLink: filteredLinks.length > 0 ? filteredLinks[0] : undefined,
           externalLinks: filteredLinks.length > 0 ? filteredLinks : undefined,
           ...(postId ? { parentId: postId } : {}),
         });

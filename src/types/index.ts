@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   username: string;
@@ -19,8 +18,10 @@ export interface Post {
   isPublic: boolean;
   parentId?: string;
   imageUrl?: string;
+  imageUrls?: string[];
   codeSnippet?: string;
   externalLink?: string;
+  externalLinks?: string[];
 }
 
 export interface Category {

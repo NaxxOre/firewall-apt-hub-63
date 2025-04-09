@@ -35,7 +35,7 @@ interface AppState {
   approveUser: (userId: string) => void;
   rejectUser: (userId: string) => void;
   
-  addPost: (post: Omit<Post, 'id' | 'createdAt' | 'authorId' | 'authorName'>) => void;
+  addPost: (post: Omit<Post, 'id' | 'createdAt' | 'authorId' | 'authorName' | 'imageUrl' | 'imageUrls' | 'externalLink' | 'externalLinks'> & { imageUrls?: string[], externalLinks?: string[] }) => void;
   deletePost: (postId: string) => void;
   
   addCategory: (category: Omit<Category, 'id'>) => void;
