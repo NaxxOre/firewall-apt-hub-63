@@ -8,12 +8,16 @@ import {
   Flag,
   MessageSquare,
   FileText,
+  Code,
+  Tool,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import AddContentModal from '@/components/AddContentModal';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import AddYouTubeChannel from '@/components/AddYouTubeChannel';
 import AddCTFComponent from '@/components/AddCTFComponent';
+import AddCodeSnippet from '@/components/AddCodeSnippet';
+import AddTestingTool from '@/components/AddTestingTool';
 import { useNavigate } from 'react-router-dom';
 
 const AdminPanel = () => {
@@ -27,7 +31,7 @@ const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState<'users' | 'content'>('users');
   const [modalOpen, setModalOpen] = useState<{
     isOpen: boolean,
-    type: 'writeup' | 'youtube' | 'ctf',
+    type: 'writeup' | 'youtube' | 'ctf' | 'code' | 'tool',
     title: string
   }>({
     isOpen: false,
@@ -61,7 +65,7 @@ const AdminPanel = () => {
     toast.success('User rejected');
   };
 
-  const openModal = (type: 'writeup' | 'youtube' | 'ctf', title: string) => {
+  const openModal = (type: 'writeup' | 'youtube' | 'ctf' | 'code' | 'tool', title: string) => {
     setModalOpen({
       isOpen: true,
       type,
@@ -171,6 +175,32 @@ const AdminPanel = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div 
                     className="bg-card hover:bg-card/90 border border-border rounded-lg p-4 cursor-pointer"
+                    onClick={() => openModal('code', 'Add Code Snippet')}
+                  >
+                    <div className="flex items-center mb-2">
+                      <Code size={18} className="mr-2 text-primary" />
+                      <h3 className="font-medium">Add Code Snippet</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Add code snippets for different categories
+                    </p>
+                  </div>
+                  
+                  <div 
+                    className="bg-card hover:bg-card/90 border border-border rounded-lg p-4 cursor-pointer"
+                    onClick={() => openModal('tool', 'Add Testing Tool')}
+                  >
+                    <div className="flex items-center mb-2">
+                      <Tool size={18} className="mr-2 text-primary" />
+                      <h3 className="font-medium">Add Testing Tool</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Add testing tools with code and descriptions
+                    </p>
+                  </div>
+                  
+                  <div 
+                    className="bg-card hover:bg-card/90 border border-border rounded-lg p-4 cursor-pointer"
                     onClick={() => openModal('writeup', 'Add Write-up')}
                   >
                     <div className="flex items-center mb-2">
@@ -228,39 +258,39 @@ const AdminPanel = () => {
       </div>
 
       {/* Content modals */}
-      {modalOpen.type === 'writeup' && (
+      {(modalOpen.type === 'writeup' || modalOpen.type === 'youtube' || modalOpen.type === 'ctf') && (
         <AddContentModal
           open={modalOpen.isOpen}
           onOpenChange={(isOpen) => setModalOpen({ ...modalOpen, isOpen })}
-          type="writeup"
+          type={modalOpen.type as 'writeup' | 'youtube' | 'ctf'}
           title={modalOpen.title}
         />
       )}
 
-      {modalOpen.type === 'youtube' && (
+      {modalOpen.type === 'code' && (
         <Dialog open={modalOpen.isOpen} onOpenChange={(isOpen) => setModalOpen({ ...modalOpen, isOpen })}>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
-              <DialogTitle>Add YouTube Channel</DialogTitle>
+              <DialogTitle>Add Code Snippet</DialogTitle>
               <DialogDescription>
-                Fill in the details below to add a new YouTube channel.
+                Fill in the details below to add a new code snippet.
               </DialogDescription>
             </DialogHeader>
-            <AddYouTubeChannel closeModal={() => setModalOpen({ ...modalOpen, isOpen: false })} />
+            <AddCodeSnippet closeModal={() => setModalOpen({ ...modalOpen, isOpen: false })} />
           </DialogContent>
         </Dialog>
       )}
 
-      {modalOpen.type === 'ctf' && (
+      {modalOpen.type === 'tool' && (
         <Dialog open={modalOpen.isOpen} onOpenChange={(isOpen) => setModalOpen({ ...modalOpen, isOpen })}>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
-              <DialogTitle>Add CTF Component</DialogTitle>
+              <DialogTitle>Add Testing Tool</DialogTitle>
               <DialogDescription>
-                Fill in the details below to add a new CTF component.
+                Fill in the details below to add a new testing tool.
               </DialogDescription>
             </DialogHeader>
-            <AddCTFComponent closeModal={() => setModalOpen({ ...modalOpen, isOpen: false })} />
+            <AddTestingTool closeModal={() => setModalOpen({ ...modalOpen, isOpen: false })} />
           </DialogContent>
         </Dialog>
       )}

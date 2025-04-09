@@ -109,40 +109,41 @@ const AddCategoryContent: React.FC<AddCategoryContentProps> = ({ type = 'code', 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="contentType"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Content Type</FormLabel>
-              <Select
-                onValueChange={(value) => {
-                  field.onChange(value);
-                  // Reset form values when content type changes
-                  if (value === 'code' || value === 'tool') {
-                    form.setValue('link', '');
-                  } else if (value === 'writeup') {
-                    form.setValue('code', '');
-                  }
-                }}
-                defaultValue={field.value}
-                value={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select content type" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="code">Code Snippet</SelectItem>
-                  <SelectItem value="writeup">Write-up</SelectItem>
-                  <SelectItem value="tool">Testing Tool</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {type !== 'writeup' && (
+          <FormField
+            control={form.control}
+            name="contentType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Content Type</FormLabel>
+                <Select
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    // Reset form values when content type changes
+                    if (value === 'code' || value === 'tool') {
+                      form.setValue('link', '');
+                    } else if (value === 'writeup') {
+                      form.setValue('code', '');
+                    }
+                  }}
+                  defaultValue={field.value}
+                  value={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select content type" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="code">Code Snippet</SelectItem>
+                    <SelectItem value="tool">Testing Tool</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         
         <FormField
           control={form.control}
