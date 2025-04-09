@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useStore } from '@/lib/store';
 import {
@@ -9,7 +8,7 @@ import {
   MessageSquare,
   FileText,
   Code,
-  Tool,
+  Wrench,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import AddContentModal from '@/components/AddContentModal';
@@ -191,7 +190,7 @@ const AdminPanel = () => {
                     onClick={() => openModal('tool', 'Add Testing Tool')}
                   >
                     <div className="flex items-center mb-2">
-                      <Tool size={18} className="mr-2 text-primary" />
+                      <Wrench size={18} className="mr-2 text-primary" />
                       <h3 className="font-medium">Add Testing Tool</h3>
                     </div>
                     <p className="text-sm text-muted-foreground">

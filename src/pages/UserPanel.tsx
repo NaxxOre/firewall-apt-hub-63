@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { useStore } from '@/lib/store';
 import { Link, useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Plus, Code, Tool } from 'lucide-react';
+import { Plus, Code, Wrench } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import AddCodeSnippet from '@/components/AddCodeSnippet';
 import AddTestingTool from '@/components/AddTestingTool';
@@ -28,17 +27,15 @@ const UserPanel = () => {
   
   const navigate = useNavigate();
   
-  // Redirect if not authenticated
   if (!isAuthenticated) {
     navigate('/login');
     return null;
   }
 
-  // Filter content to only show the current user's content
-  const userCodeSnippets = codeSnippets.filter(snippet => true); // In a real app, filter by user ID
-  const userTestingTools = testingTools.filter(tool => true); // In a real app, filter by user ID
-  const userWriteUps = writeUps.filter(writeUp => true); // In a real app, filter by user ID
-  const userCTFComponents = ctfComponents.filter(component => true); // In a real app, filter by user ID
+  const userCodeSnippets = codeSnippets.filter(snippet => true);
+  const userTestingTools = testingTools.filter(tool => true);
+  const userWriteUps = writeUps.filter(writeUp => true);
+  const userCTFComponents = ctfComponents.filter(component => true);
 
   const openModal = (type: 'code' | 'tool' | 'writeup' | 'ctf', title: string) => {
     setModalOpen({
@@ -141,7 +138,7 @@ const UserPanel = () => {
             <TabsContent value="tools" className="pt-2">
               {userTestingTools.length === 0 ? (
                 <div className="text-center py-10 border border-dashed rounded-lg">
-                  <Tool size={40} className="mx-auto mb-4 text-muted-foreground" />
+                  <Wrench size={40} className="mx-auto mb-4 text-muted-foreground" />
                   <h3 className="text-lg font-medium mb-2">No Testing Tools</h3>
                   <p className="text-muted-foreground mb-4">
                     You haven't added any testing tools yet.
@@ -233,7 +230,6 @@ const UserPanel = () => {
         </div>
       </div>
 
-      {/* Modals for adding content */}
       {modalOpen.type === 'code' && (
         <Dialog open={modalOpen.isOpen} onOpenChange={(isOpen) => setModalOpen({ ...modalOpen, isOpen })}>
           <DialogContent className="sm:max-w-[600px]">
