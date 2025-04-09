@@ -10,6 +10,13 @@ import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
 import NotFound from "./pages/NotFound";
 import AdminPanel from "./pages/Admin/AdminPanel";
+import CTF from "./pages/CTF";
+import YoutubeChannels from "./pages/YoutubeChannels";
+import Category from "./pages/Category";
+import Forum from "./pages/Forum";
+import CreatePost from "./pages/CreatePost";
+import PostDetail from "./pages/PostDetail";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +34,13 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/admin" element={<AdminPanel />} />
+              <Route path="/ctf" element={<CTF />} />
+              <Route path="/youtube-channels" element={<YoutubeChannels />} />
+              <Route path="/category/:slug" element={<Category />} />
+              <Route path="/forum" element={<Forum />} />
+              <Route path="/forum/create" element={<CreatePost />} />
+              <Route path="/forum/post/:postId" element={<PostDetail />} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
