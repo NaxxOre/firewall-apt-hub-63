@@ -1,5 +1,6 @@
+
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { 
   User, 
   Post, 
@@ -10,7 +11,7 @@ import {
   CTFComponent,
   YoutubeChannel
 } from '../types';
-import { CATEGORIES, initialUsers } from './constants';
+import { CATEGORIES, initialUsers, ADMIN_USER } from './constants';
 
 interface AppState {
   // Auth
@@ -342,6 +343,18 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'firewall-apt-storage',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        users: state.users,
+        pendingUsers: state.pendingUsers,
+        posts: state.posts,
+        categories: state.categories,
+        codeSnippets: state.codeSnippets,
+        writeUps: state.writeUps,
+        testingTools: state.testingTools,
+        ctfComponents: state.ctfComponents,
+        youtubeChannels: state.youtubeChannels,
+      }),
     }
   )
 );

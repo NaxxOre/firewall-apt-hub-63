@@ -196,11 +196,11 @@ const AddCategoryContent: React.FC<AddCategoryContentProps> = ({ type = 'code', 
                 <FormLabel>{contentType === 'code' ? 'Code' : 'Tool Code'}</FormLabel>
                 <FormControl>
                   <div className="border rounded-md overflow-hidden">
-                    <ScrollArea className="h-60">
+                    <ScrollArea className="h-60 w-full">
                       <Textarea 
                         placeholder={contentType === 'code' ? "Enter code snippet" : "Enter tool code"} 
                         {...field} 
-                        className="min-h-[240px] font-mono border-0" 
+                        className="min-h-[240px] font-mono border-0 resize-none w-full" 
                       />
                     </ScrollArea>
                   </div>
@@ -236,11 +236,11 @@ const AddCategoryContent: React.FC<AddCategoryContentProps> = ({ type = 'code', 
                 <FormLabel>Description</FormLabel>
                 <FormControl>
                   <div className="border rounded-md overflow-hidden">
-                    <ScrollArea className="h-32">
+                    <ScrollArea className="h-32 w-full">
                       <Textarea 
                         placeholder="Enter a description" 
                         {...field} 
-                        className="min-h-[120px] border-0" 
+                        className="min-h-[120px] border-0 resize-none w-full" 
                       />
                     </ScrollArea>
                   </div>

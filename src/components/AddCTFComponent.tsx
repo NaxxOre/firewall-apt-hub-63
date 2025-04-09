@@ -38,21 +38,38 @@ const AddCTFComponent: React.FC<AddCTFComponentProps> = ({ closeModal }) => {
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     try {
-      // We'll combine the fields into a single content object
-      const ctfData = {
-        title: values.title,
-        type: 'combined',
-        content: JSON.stringify({
-          link: values.link,
-          teamName: values.teamName,
-          password: values.password
-        }),
-        isPublic: currentUser?.isAdmin ? values.isPublic : true,
-      };
+      // Create three separate components for link, team name, and password
+      // Link component
+      if (values.link) {
+        addCTFComponent({
+          title: `${values.title} - Link`,
+          type: 'link',
+          content: values.link,
+          isPublic: currentUser?.isAdmin ? values.isPublic : true,
+        });
+      }
       
-      addCTFComponent(ctfData);
+      // Team name component
+      if (values.teamName) {
+        addCTFComponent({
+          title: `${values.title} - Team`,
+          type: 'team',
+          content: values.teamName,
+          isPublic: currentUser?.isAdmin ? values.isPublic : true,
+        });
+      }
       
-      toast.success('CTF component added successfully');
+      // Password component
+      if (values.password) {
+        addCTFComponent({
+          title: `${values.title} - Password`,
+          type: 'password',
+          content: values.password,
+          isPublic: currentUser?.isAdmin ? values.isPublic : true,
+        });
+      }
+      
+      toast.success('CTF components added successfully');
       form.reset();
       if (closeModal) closeModal();
     } catch (error) {
@@ -143,7 +160,7 @@ const AddCTFComponent: React.FC<AddCTFComponentProps> = ({ closeModal }) => {
           />
         )}
         
-        <Button type="submit" className="w-full">Add CTF Component</Button>
+        <Button type="submit" className="w-full">Add CTF Components</Button>
       </form>
     </Form>
   );

@@ -8,6 +8,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import AddCategoryContent from './AddCategoryContent';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import AddYouTubeChannel from './AddYouTubeChannel';
+import AddCTFComponent from './AddCTFComponent';
 
 interface AddContentModalProps {
   open: boolean;
@@ -21,14 +24,24 @@ const AddContentModal = ({ open, onOpenChange, type, title }: AddContentModalPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
             Fill in the details below to add new content.
           </DialogDescription>
         </DialogHeader>
-        <AddCategoryContent type={type as 'code' | 'writeup' | 'tool'} closeModal={closeModal} />
+        <ScrollArea className="max-h-[70vh]">
+          {(type === 'code' || type === 'writeup' || type === 'tool') && (
+            <AddCategoryContent type={type} closeModal={closeModal} />
+          )}
+          {type === 'youtube' && (
+            <AddYouTubeChannel closeModal={closeModal} />
+          )}
+          {type === 'ctf' && (
+            <AddCTFComponent closeModal={closeModal} />
+          )}
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
