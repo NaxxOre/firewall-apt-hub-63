@@ -57,6 +57,7 @@ const AddCategoryContent: React.FC<AddCategoryContentProps> = ({ type = 'code', 
         addCodeSnippet({
           title: values.title,
           code: values.code,
+          content: values.code, // Add content property
           categoryId: values.categoryId,
           isPublic: currentUser?.isAdmin ? values.isPublic : true,
         });
@@ -71,7 +72,8 @@ const AddCategoryContent: React.FC<AddCategoryContentProps> = ({ type = 'code', 
         addWriteUp({
           title: values.title,
           link: values.link,
-          description: values.description,
+          url: values.link, // Add url property
+          description: values.description || '',
           categoryId: values.categoryId,
           isPublic: currentUser?.isAdmin ? values.isPublic : true,
         });
@@ -86,7 +88,8 @@ const AddCategoryContent: React.FC<AddCategoryContentProps> = ({ type = 'code', 
         addTestingTool({
           title: values.title,
           code: values.code,
-          description: values.description,
+          content: values.code, // Add content property
+          description: values.description || '',
           categoryId: values.categoryId,
           isPublic: currentUser?.isAdmin ? values.isPublic : true,
         });
