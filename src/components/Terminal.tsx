@@ -23,12 +23,14 @@ const Terminal = () => {
     "[+] User privileges initialized",
     "> Secure connection established",
     "$ ./notification.sh",
-    "> New member registrations pending admin approval",
-    "[+] Updates available in team repositories"
+    "> New registrations from other devices pending approval",
+    "[+] Admin panel updated with new requests",
+    "[+] Team repository synchronized",
+    "> Supabase connection stable"
   ];
   
   const finalLine = isAuthenticated 
-    ? "🔒 Secure session active" 
+    ? "🔒 Secure session active with full administrative access" 
     : "🔒 Login required for full access";
   
   const terminalLines = [

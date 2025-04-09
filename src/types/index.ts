@@ -17,11 +17,11 @@ export interface Post {
   createdAt: Date;
   isPublic: boolean;
   parentId?: string;
-  imageUrl?: string;
-  imageUrls?: string[];
   codeSnippet?: string;
+  imageUrl?: string;
+  imageUrls: string[];
   externalLink?: string;
-  externalLinks?: string[];
+  externalLinks: string[];
 }
 
 export interface Category {
