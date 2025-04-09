@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useStore } from '@/lib/store';
 import { CATEGORIES } from '@/lib/constants';
-import { ChevronRight, Lock, Code, FileText, Tool, Youtube } from 'lucide-react';
+import { ChevronRight, Lock, Code, FileText, Wrench, Youtube } from 'lucide-react';
 
 const Home = () => {
   const { isAuthenticated, currentUser } = useStore();
@@ -102,7 +101,7 @@ const Home = () => {
                     <span>Write-ups</span>
                   </div>
                   <div className="flex items-center">
-                    <Tool size={16} className="mr-1" />
+                    <Wrench size={16} className="mr-1" />
                     <span>Tools</span>
                   </div>
                 </div>
