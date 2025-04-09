@@ -15,11 +15,11 @@ const CodeDisplayBox: React.FC<CodeDisplayBoxProps> = ({ content, maxHeight = '3
         <CopyButton content={content} />
       </div>
       <div className="bg-card">
-        <div className="bg-muted py-2 px-4 border-b">
+        <div className="bg-muted py-2 px-4 border-b flex items-center justify-between">
           <span className="font-medium text-sm">Code</span>
         </div>
-        <ScrollArea className="w-full" style={{ maxHeight }}>
-          <pre className="font-mono text-sm whitespace-pre-wrap p-4 overflow-x-auto">
+        <ScrollArea className="w-full rounded-b-md" style={{ maxHeight }}>
+          <pre className="font-mono text-sm p-4 overflow-x-auto whitespace-pre-wrap">
             {content}
           </pre>
         </ScrollArea>

@@ -32,6 +32,7 @@ const Category = () => {
   const category = CATEGORIES.find((cat) => cat.slug === categoryId);
   
   if (!category) {
+    console.error(`Category not found for slug: ${categoryId}`);
     return (
       <div className="container mx-auto px-4 py-16 text-center">
         <h1 className="text-2xl font-bold mb-4">Category Not Found</h1>

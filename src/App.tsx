@@ -45,7 +45,9 @@ const App = () => {
                   <Route path="/user" element={<UserPanel />} />
                   <Route path="/ctf" element={<CTF />} />
                   <Route path="/youtube-channels" element={<YoutubeChannels />} />
-                  <Route path="/category/:slug" element={<Category />} />
+                  {/* Fix the category routes to match both patterns */}
+                  <Route path="/category/:categoryId" element={<Category />} />
+                  <Route path="/category/:categoryId/:sectionId" element={<Category />} />
                   <Route path="/forum" element={<Forum />} />
                   <Route path="/forum/create" element={<CreatePost />} />
                   <Route path="/forum/post/:postId" element={<PostDetail />} />

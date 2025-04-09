@@ -5,7 +5,7 @@ import { CATEGORY_SECTIONS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 
 const CategoryNav = () => {
-  const { categoryId = '', sectionId = '' } = useParams<{ categoryId: string; sectionId: string }>();
+  const { categoryId = '', sectionId = 'codes' } = useParams<{ categoryId: string; sectionId: string }>();
   
   return (
     <div className="bg-hacker-darkgray rounded-lg border border-hacker-lightgray mb-6">
@@ -16,7 +16,7 @@ const CategoryNav = () => {
             to={`/category/${categoryId}/${section.slug}`}
             className={cn(
               "px-4 py-2 transition-colors hover:bg-hacker-lightgray",
-              sectionId === section.slug 
+              section.slug === sectionId || (sectionId === "" && section.slug === "codes")
                 ? "bg-hacker-lightgray text-hacker-red border-b-2 border-hacker-red" 
                 : "text-foreground border-b-2 border-transparent"
             )}
