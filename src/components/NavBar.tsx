@@ -38,14 +38,14 @@ const NavBar = () => {
 
           {/* Mobile menu button */}
           <button
-            className="md:hidden flex items-center p-2"
+            className="lg:hidden flex items-center p-2"
             onClick={toggleMenu}
           >
             {isOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-6">
+          <nav className="hidden lg:flex items-center space-x-4 xl:space-x-6">
             <Link to="/" className={`py-1 px-2 font-medium hover:text-primary border-b-2 transition-colors ${isActive('/')}`}>
               Home
             </Link>
@@ -73,7 +73,7 @@ const NavBar = () => {
             </Link>
 
             {isAuthenticated ? (
-              <div className="relative ml-4 flex items-center space-x-4">
+              <div className="relative ml-2 xl:ml-4 flex items-center space-x-2 xl:space-x-4">
                 <Link 
                   to={currentUser?.isAdmin ? '/admin' : '/profile'} 
                   className="flex items-center space-x-1 bg-secondary hover:bg-secondary/80 text-foreground py-1.5 px-3 rounded-md transition-colors"
@@ -90,7 +90,7 @@ const NavBar = () => {
                 </button>
               </div>
             ) : (
-              <div className="ml-4 flex items-center space-x-2">
+              <div className="ml-2 xl:ml-4 flex items-center space-x-2">
                 <Link
                   to="/login"
                   className="py-1.5 px-4 hover:bg-secondary/80 rounded-md transition-colors"
@@ -110,7 +110,7 @@ const NavBar = () => {
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <nav className="md:hidden py-4 space-y-3">
+          <nav className="lg:hidden py-4 space-y-3">
             <Link 
               to="/" 
               className={`block py-2 px-4 hover:bg-secondary/50 rounded-md ${isActive('/')}`}

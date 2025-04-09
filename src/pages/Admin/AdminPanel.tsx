@@ -4,13 +4,10 @@ import { useStore } from '@/lib/store';
 import {
   Users,
   FolderOpen,
-  PlusCircle,
   Youtube,
   Flag,
   MessageSquare,
-  Code,
   FileText,
-  Wrench,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import AddContentModal from '@/components/AddContentModal';
@@ -30,11 +27,11 @@ const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState<'users' | 'content'>('users');
   const [modalOpen, setModalOpen] = useState<{
     isOpen: boolean,
-    type: 'code' | 'writeup' | 'tool' | 'youtube' | 'ctf',
+    type: 'writeup' | 'youtube' | 'ctf',
     title: string
   }>({
     isOpen: false,
-    type: 'code',
+    type: 'writeup',
     title: ''
   });
   
@@ -64,7 +61,7 @@ const AdminPanel = () => {
     toast.success('User rejected');
   };
 
-  const openModal = (type: 'code' | 'writeup' | 'tool' | 'youtube' | 'ctf', title: string) => {
+  const openModal = (type: 'writeup' | 'youtube' | 'ctf', title: string) => {
     setModalOpen({
       isOpen: true,
       type,
@@ -171,20 +168,7 @@ const AdminPanel = () => {
             {activeTab === 'content' && (
               <div>
                 <h2 className="text-xl font-bold mb-4">Content Management</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div 
-                    className="bg-card hover:bg-card/90 border border-border rounded-lg p-4 cursor-pointer"
-                    onClick={() => openModal('code', 'Add Code Snippet')}
-                  >
-                    <div className="flex items-center mb-2">
-                      <Code size={18} className="mr-2 text-primary" />
-                      <h3 className="font-medium">Add Code Snippet</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Add code snippets to categories
-                    </p>
-                  </div>
-                  
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div 
                     className="bg-card hover:bg-card/90 border border-border rounded-lg p-4 cursor-pointer"
                     onClick={() => openModal('writeup', 'Add Write-up')}
@@ -195,19 +179,6 @@ const AdminPanel = () => {
                     </div>
                     <p className="text-sm text-muted-foreground">
                       Add write-ups with external links
-                    </p>
-                  </div>
-                  
-                  <div 
-                    className="bg-card hover:bg-card/90 border border-border rounded-lg p-4 cursor-pointer"
-                    onClick={() => openModal('tool', 'Add Testing Tool')}
-                  >
-                    <div className="flex items-center mb-2">
-                      <Wrench size={18} className="mr-2 text-primary" />
-                      <h3 className="font-medium">Add Testing Tool</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Add testing tools to categories
                     </p>
                   </div>
                   
@@ -257,11 +228,11 @@ const AdminPanel = () => {
       </div>
 
       {/* Content modals */}
-      {modalOpen.type !== 'youtube' && modalOpen.type !== 'ctf' && (
+      {modalOpen.type === 'writeup' && (
         <AddContentModal
           open={modalOpen.isOpen}
           onOpenChange={(isOpen) => setModalOpen({ ...modalOpen, isOpen })}
-          type={modalOpen.type}
+          type="writeup"
           title={modalOpen.title}
         />
       )}

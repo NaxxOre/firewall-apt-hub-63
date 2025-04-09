@@ -15,7 +15,7 @@ import AddCTFComponent from './AddCTFComponent';
 interface AddContentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  type: 'code' | 'writeup' | 'tool' | 'youtube' | 'ctf';
+  type: 'writeup' | 'youtube' | 'ctf';
   title: string;
 }
 
@@ -32,8 +32,8 @@ const AddContentModal = ({ open, onOpenChange, type, title }: AddContentModalPro
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[70vh] pr-4 overflow-y-auto">
-          {(type === 'code' || type === 'writeup' || type === 'tool') && (
-            <AddCategoryContent type={type} closeModal={closeModal} />
+          {type === 'writeup' && (
+            <AddCategoryContent type="writeup" closeModal={closeModal} />
           )}
           {type === 'youtube' && (
             <AddYouTubeChannel closeModal={closeModal} />
