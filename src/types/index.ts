@@ -3,7 +3,7 @@ export interface User {
   id: string;
   username: string;
   email: string;
-  password?: string;
+  password: string;
   isAdmin: boolean;
   isApproved: boolean;
   createdAt: Date;
@@ -15,59 +15,61 @@ export interface Post {
   content: string;
   authorId: string;
   authorName: string;
-  isPublic: boolean;
   createdAt: Date;
-  category?: string;
-  tags?: string[];
+  isPublic: boolean;
+  parentId?: string;
+  imageUrl?: string;
+  codeSnippet?: string;
+  externalLink?: string;
 }
 
 export interface Category {
   id: string;
   name: string;
   slug: string;
-  description?: string;
+  description: string;
 }
 
 export interface CodeSnippet {
   id: string;
   title: string;
-  code: string;
   content: string;
-  description?: string; // Adding the missing description property
+  code: string;
   categoryId: string;
-  isPublic: boolean;
+  description?: string;
   createdAt: Date;
+  isPublic: boolean;
 }
 
 export interface WriteUp {
   id: string;
   title: string;
-  link: string;
   url: string;
+  link: string;
   description?: string;
   categoryId: string;
-  isPublic: boolean;
   createdAt: Date;
+  isPublic: boolean;
 }
 
 export interface TestingTool {
   id: string;
   title: string;
-  code: string;
   content: string;
+  code: string;
   description?: string;
   categoryId: string;
-  isPublic: boolean;
   createdAt: Date;
+  isPublic: boolean;
 }
 
 export interface CTFComponent {
   id: string;
-  type: 'link' | 'teamName' | 'password';
   title: string;
+  type: 'link' | 'teamName' | 'password';
   content: string;
-  isPublic: boolean;
   createdAt: Date;
+  isPublic: boolean;
 }
 
 export interface YoutubeChannel {
@@ -76,14 +78,6 @@ export interface YoutubeChannel {
   url: string;
   description?: string;
   thumbnailUrl?: string;
-  isPublic: boolean;
   createdAt: Date;
+  isPublic: boolean;
 }
-
-export type ContentType = 
-  | 'post' 
-  | 'codeSnippet'
-  | 'writeUp'
-  | 'testingTool'
-  | 'ctfComponent'
-  | 'youtubeChannel';

@@ -172,8 +172,9 @@ export const useStore = create<AppState>()(
       
       deletePost: (postId) => {
         const { posts } = get();
+        // Delete the post and any replies to it
         set({
-          posts: posts.filter((post) => post.id !== postId),
+          posts: posts.filter((post) => post.id !== postId && post.parentId !== postId),
         });
       },
       

@@ -53,6 +53,7 @@ const App = () => {
                       <Route path="/category/:categoryId/:sectionId" element={<Category />} />
                       <Route path="/forum" element={<Forum />} />
                       <Route path="/forum/create" element={<CreatePost />} />
+                      <Route path="/forum/create/:postId" element={<CreatePost />} />
                       <Route path="/forum/post/:postId" element={<PostDetail />} />
                       <Route path="/profile" element={<Profile />} />
                       <Route path="*" element={<NotFound />} />

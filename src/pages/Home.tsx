@@ -1,202 +1,125 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { useStore } from '@/lib/store';
 import { CATEGORIES } from '@/lib/constants';
-import { ChevronRight, Lock, Code, FileText, Wrench, Youtube, ExternalLink } from 'lucide-react';
+import { useStore } from '@/lib/store';
+import { Shield, LockKeyhole, FileCode, BookOpen, Wrench } from 'lucide-react';
 
 const Home = () => {
-  const { isAuthenticated, currentUser } = useStore();
-  const [typedText, setTypedText] = useState('');
-  const fullText = 'Welcome to f!R3wA11Apt';
-
-  useEffect(() => {
-    let index = 0;
-    const typingInterval = setInterval(() => {
-      if (index < fullText.length) {
-        setTypedText(prev => prev + fullText.charAt(index));
-        index++;
-      } else {
-        clearInterval(typingInterval);
-      }
-    }, 100); // Adjust typing speed as needed
-
-    return () => clearInterval(typingInterval);
-  }, []);
-
+  const { isAuthenticated } = useStore();
+  
   return (
-    <div className="container mx-auto px-4 py-8">
-      <section className="mb-12">
-        <div className="flex flex-col md:flex-row md:items-center justify-between">
-          <div className="md:w-1/2 mb-8 md:mb-0">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              <span className="text-hacker-red">{typedText}</span>
-              <span className="animate-pulse">|</span>
-            </h1>
-            <p className="text-xl mb-6 text-muted-foreground">
-              A small CTF team from University of Information Technology sharing the knowledges to improve your cyber security skills.
-            </p>
-            {!isAuthenticated ? (
-              <div className="flex flex-wrap gap-4">
-                <Link
-                  to="/register"
-                  className="bg-primary hover:bg-primary/90 text-white py-3 px-6 rounded-md inline-flex items-center"
-                >
-                  Join Community
-                  <ChevronRight size={18} className="ml-1" />
-                </Link>
-                <Link
-                  to="/login"
-                  className="bg-secondary hover:bg-secondary/80 py-3 px-6 rounded-md inline-flex items-center"
-                >
-                  Login
-                </Link>
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-4">
-                <Link
-                  to="/forum"
-                  className="bg-primary hover:bg-primary/90 text-white py-3 px-6 rounded-md inline-flex items-center"
-                >
-                  Browse Forum
-                  <ChevronRight size={18} className="ml-1" />
-                </Link>
-                {currentUser?.isAdmin && (
-                  <Link
-                    to="/admin"
-                    className="bg-secondary hover:bg-secondary/80 py-3 px-6 rounded-md inline-flex items-center"
-                  >
-                    Admin Panel
-                  </Link>
-                )}
-              </div>
-            )}
-
-            <div className="mt-6 flex items-center">
-              <a
-                href="https://t.me/zuzip1234"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:text-primary/80 flex items-center"
+    <div className="min-h-[calc(100vh-12rem)]">
+      {/* Hero Section */}
+      <div className="bg-hacker-darkgray rounded-lg border border-hacker-lightgray p-6 mb-10">
+        <div className="max-w-4xl mx-auto text-center">
+          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-hacker-green">
+            Welcome to f!R3wA11Apt<span className="typing-animation">|</span>
+          </h1>
+          <p className="text-lg mb-6">
+            Your central hub for cybersecurity resources, CTF tools, and penetration testing guides.
+          </p>
+          {!isAuthenticated && (
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link
+                to="/register"
+                className="bg-primary hover:bg-primary/80 py-2 px-6 rounded-md transition-colors w-full sm:w-auto"
               >
-                <ExternalLink size={16} className="mr-1" />
-                Contact us on Telegram for Questions or Approval
-              </a>
+                Register Now
+              </Link>
+              <Link
+                to="/login"
+                className="bg-secondary hover:bg-secondary/80 py-2 px-6 rounded-md transition-colors w-full sm:w-auto"
+              >
+                Login
+              </Link>
             </div>
-          </div>
-          <div className="md:w-1/2 bg-hacker-darkgray border border-hacker-lightgray p-6 rounded-lg">
-            <div className="text-xs text-muted-foreground mb-2">// Terminal</div>
-            <div className="font-mono text-sm">
-              <p className="text-green-400 mb-1">$ ./welcome.sh</p>
-              <p className="mb-2">
-                <span className="text-hacker-green">{'>'}</span> Initializing f!R3wA11Apt resources...
-              </p>
-              <p className="text-yellow-400 mb-1">[+] Categories loaded</p>
-              <p className="text-yellow-400 mb-1">[+] CTF resources available</p>
-              <p className="text-yellow-400 mb-1">[+] Code database connected</p>
-              <p className="text-hacker-green mt-2">
-                {'>'} Access granted to public resources
-              </p>
-              {!isAuthenticated && (
-                <p className="flex items-center text-hacker-red mt-2">
-                  <Lock size={14} className="mr-2" />
-                  Login required for full access
-                </p>
-              )}
-            </div>
-          </div>
+          )}
         </div>
-      </section>
+      </div>
 
-      <section className="mb-12">
-        <h2 className="text-2xl font-bold mb-6 pb-2 border-b border-border">
-          Security Categories
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {CATEGORIES.map((category) => (
-            <Link
-              key={category.slug}
-              to={`/category/${category.slug}`}
-              className="bg-card hover:bg-card/80 border border-border rounded-lg p-5 transition-all hover:shadow-lg hover:shadow-primary/5"
-            >
-              <h3 className="text-xl font-bold mb-2">{category.name}</h3>
-              <div className="flex items-center text-sm text-muted-foreground">
-                <div className="flex space-x-3 mt-4">
-                  <div className="flex items-center">
-                    <Code size={16} className="mr-1" />
-                    <span>Codes</span>
-                  </div>
-                  <div className="flex items-center">
-                    <FileText size={16} className="mr-1" />
-                    <span>Write-ups</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Wrench size={16} className="mr-1" />
-                    <span>Tools</span>
-                  </div>
-                </div>
+      {/* Categories Section */}
+      <h2 className="text-2xl font-bold mb-6">Security Categories</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+        {CATEGORIES.map((category) => (
+          <Link
+            key={category.id}
+            to={`/category/${category.slug}`}
+            className="bg-card hover:bg-card/80 border border-border rounded-lg p-6 transition-colors"
+          >
+            <div className="flex flex-col h-full">
+              <div className="mb-4">
+                <CategoryIcon slug={category.slug} />
               </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-        <div className="bg-card border border-border rounded-lg p-6">
-          <h2 className="text-2xl font-bold mb-4">CTF Resources</h2>
-          <p className="text-muted-foreground mb-4">
-            Access Capture The Flag challenges, team information, and tools to
-            enhance your CTF performance.
-          </p>
-          <Link
-            to="/ctf"
-            className="inline-flex items-center text-primary hover:text-primary/80"
-          >
-            Access CTF Resources 
-            <ChevronRight size={18} className="ml-1" />
+              <h3 className="text-xl font-bold mb-2">{category.name}</h3>
+              <p className="text-muted-foreground text-sm flex-grow">
+                {category.description}
+              </p>
+              <div className="flex justify-between items-center mt-4 text-sm">
+                <span className="text-primary hover:underline">Explore resources</span>
+              </div>
+            </div>
           </Link>
-        </div>
+        ))}
+      </div>
 
-        <div className="bg-card border border-border rounded-lg p-6">
-          <h2 className="text-2xl font-bold mb-4">YouTube Channels</h2>
-          <p className="text-muted-foreground mb-4">
-            Discover curated cybersecurity and hacking channels to expand your
-            knowledge.
+      {/* Resources Section */}
+      <h2 className="text-2xl font-bold mb-6">Additional Resources</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Link
+          to="/ctf"
+          className="bg-card hover:bg-card/80 border border-border rounded-lg p-6 transition-colors"
+        >
+          <h3 className="text-xl font-bold mb-2">CTF Resources</h3>
+          <p className="text-muted-foreground text-sm mb-4">
+            Capture The Flag competitions, team credentials, and useful links.
           </p>
-          <div className="flex items-center mb-4">
-            <Youtube size={20} className="text-red-500 mr-2" />
-            <span className="text-sm">Educational content selected by experts</span>
-          </div>
-          <Link
-            to="/youtube-channels"
-            className="inline-flex items-center text-primary hover:text-primary/80"
-          >
-            Browse Channels
-            <ChevronRight size={18} className="ml-1" />
-          </Link>
-        </div>
-      </section>
+          <span className="text-primary hover:underline text-sm">View CTF resources</span>
+        </Link>
 
-      <section className="mb-12">
-        <h2 className="text-2xl font-bold mb-6 pb-2 border-b border-border">
-          Community Forum
-        </h2>
-        <div className="bg-card border border-border rounded-lg p-6">
-          <p className="text-muted-foreground mb-4">
-            Join discussions, share knowledge, and connect with other security
-            enthusiasts in our community forum.
+        <Link
+          to="/forum"
+          className="bg-card hover:bg-card/80 border border-border rounded-lg p-6 transition-colors"
+        >
+          <h3 className="text-xl font-bold mb-2">Community Forum</h3>
+          <p className="text-muted-foreground text-sm mb-4">
+            Discuss cybersecurity topics, share knowledge, and ask questions.
           </p>
-          <Link
-            to="/forum"
-            className="bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded-md inline-flex items-center"
-          >
-            Go to Forum
-            <ChevronRight size={18} className="ml-1" />
-          </Link>
-        </div>
-      </section>
+          <span className="text-primary hover:underline text-sm">Join the conversation</span>
+        </Link>
+
+        <Link
+          to="/youtube-channels"
+          className="bg-card hover:bg-card/80 border border-border rounded-lg p-6 transition-colors"
+        >
+          <h3 className="text-xl font-bold mb-2">YouTube Channels</h3>
+          <p className="text-muted-foreground text-sm mb-4">
+            Curated list of cybersecurity YouTube channels and educational content.
+          </p>
+          <span className="text-primary hover:underline text-sm">Discover channels</span>
+        </Link>
+      </div>
     </div>
   );
+};
+
+// Helper component for category icons
+const CategoryIcon = ({ slug }: { slug: string }) => {
+  switch (slug) {
+    case 'cryptography':
+      return <LockKeyhole size={24} className="text-primary" />;
+    case 'web':
+      return <FileCode size={24} className="text-primary" />;
+    case 'reverse':
+      return <BookOpen size={24} className="text-primary" />;
+    case 'forensics':
+      return <Shield size={24} className="text-primary" />;
+    case 'binary-exploit':
+    case 'pwn':
+      return <Wrench size={24} className="text-primary" />;
+    default:
+      return <Shield size={24} className="text-primary" />;
+  }
 };
 
 export default Home;
