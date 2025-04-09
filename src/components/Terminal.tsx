@@ -1,17 +1,41 @@
 
 import React, { useState, useEffect } from 'react';
+import { useStore } from '@/lib/store';
 
 const Terminal = () => {
+  const { isAuthenticated, currentUser } = useStore();
   const [displayedLines, setDisplayedLines] = useState<string[]>([]);
-  const terminalLines = [
-    "// Terminal",
+  
+  const initialTerminalLine = "// Terminal";
+  const defaultLines = [
     "$ ./welcome.sh",
     "> Initializing f!R3wA11Apt resources...",
     "[+] Categories loaded",
     "[+] CTF resources available",
     "[+] Code database connected",
-    "> Access granted to public resources",
-    "🔒 Login required for full access"
+    "> Access granted to public resources"
+  ];
+  
+  const loggedInLines = [
+    "$ ./auth_status.sh",
+    `> Welcome back, ${currentUser?.username || 'User'}!`,
+    "[+] Full access granted to all resources",
+    "[+] User privileges initialized",
+    "> Secure connection established",
+    "$ ./notification.sh",
+    "> New member registrations pending admin approval",
+    "[+] Updates available in team repositories"
+  ];
+  
+  const finalLine = isAuthenticated 
+    ? "🔒 Secure session active" 
+    : "🔒 Login required for full access";
+  
+  const terminalLines = [
+    initialTerminalLine,
+    ...defaultLines,
+    ...(isAuthenticated ? loggedInLines : []),
+    finalLine
   ];
 
   useEffect(() => {
@@ -25,11 +49,11 @@ const Terminal = () => {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [displayedLines]);
+  }, [displayedLines, terminalLines]);
 
   useEffect(() => {
-    setDisplayedLines([terminalLines[0]]);
-  }, []);
+    setDisplayedLines([initialTerminalLine]);
+  }, [isAuthenticated]); // Reset and restart animation when auth status changes
 
   return (
     <div className="bg-[#1a1a1a] rounded-lg border border-[#333] shadow-lg text-left font-mono text-sm overflow-hidden mx-auto max-w-2xl">
@@ -39,7 +63,7 @@ const Terminal = () => {
         <div className="w-3 h-3 rounded-full bg-green-500"></div>
         <span className="text-gray-300 text-xs ml-2">f!R3wA11Apt terminal</span>
       </div>
-      <div className="p-4 overflow-auto">
+      <div className="p-4 overflow-auto max-h-60">
         {displayedLines.map((line, index) => (
           <div key={index} className={`mb-1 line-animation ${getLineClass(line)}`}>
             {line}

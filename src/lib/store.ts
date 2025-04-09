@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { 
@@ -159,15 +160,18 @@ export const useStore = create<AppState>()(
         
         const newPost: Post = {
           id: Date.now().toString(),
-          ...postData,
-          imageUrl: postData.imageUrl || undefined,
-          imageUrls: postData.imageUrls || [],
-          externalLink: postData.externalLink || undefined,
-          externalLinks: postData.externalLinks || [],
+          title: postData.title,
+          content: postData.content,
           authorId: currentUser.id,
           authorName: currentUser.username,
           isPublic: currentUser.isAdmin ? postData.isPublic : true,
           createdAt: new Date(),
+          parentId: postData.parentId,
+          codeSnippet: postData.codeSnippet,
+          imageUrl: postData.imageUrls && postData.imageUrls.length > 0 ? postData.imageUrls[0] : undefined,
+          imageUrls: postData.imageUrls || [],
+          externalLink: postData.externalLinks && postData.externalLinks.length > 0 ? postData.externalLinks[0] : undefined,
+          externalLinks: postData.externalLinks || [],
         };
         
         set({ posts: [...posts, newPost] });

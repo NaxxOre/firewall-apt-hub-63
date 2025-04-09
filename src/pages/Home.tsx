@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { CATEGORIES } from '@/lib/constants';
@@ -13,8 +14,8 @@ const Home = () => {
       {/* Hero Section */}
       <div className="bg-hacker-darkgray rounded-lg border border-hacker-lightgray p-6 mb-10">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-hacker-green">
-            Welcome to f!R3wA11Apt<span className="typing-animation">|</span>
+          <h1 className="text-3xl md:text-4xl font-bold mb-4">
+            Welcome to <span className="text-hacker-green">f!<span className="highlight-r">R</span>3w<span className="highlight-a">A</span>11<span className="highlight-a">A</span>pt</span>
           </h1>
           <p className="text-lg mb-6">
             We are burmese ctf team from University of Information Technology and we are learning and sharing and seeking knowledges to improve our and your cybersecurity skills to the next level.
