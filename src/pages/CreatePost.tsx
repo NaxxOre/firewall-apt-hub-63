@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useFormik } from 'formik';
@@ -123,7 +122,7 @@ const CreatePost = () => {
               <div className="text-red-500 text-sm">{formik.errors.content}</div>
             ) : null}
           </div>
-
+          
           <div className="space-y-2">
             <label htmlFor="codeSnippet" className="text-sm font-medium">
               Code Snippet
@@ -132,11 +131,11 @@ const CreatePost = () => {
               height="200px"
               defaultLanguage="javascript"
               value={formik.values.codeSnippet}
-              onChange={(value) => formik.setFieldValue('codeSnippet', value)}
+              onChange={(value) => formik.setFieldValue('codeSnippet', value || '')}
               theme="vs-dark"
               options={{
                 acceptSuggestionOnEnter: "off",
-                wordBasedSuggestions: false,
+                wordBasedSuggestions: "off",
                 suggestOnTriggerCharacters: false,
                 tabCompletion: "off"
               }}
@@ -170,7 +169,7 @@ const CreatePost = () => {
               ))}
             </div>
           </div>
-
+          
           <div className="space-y-2">
             <label className="text-sm font-medium">
               External Links

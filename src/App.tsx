@@ -22,10 +22,10 @@ import CreatePost from "./pages/CreatePost";
 import PostDetail from "./pages/PostDetail";
 import Profile from "./pages/Profile";
 
-// Create a new QueryClient instance outside the component
-const queryClient = new QueryClient();
-
 const App = () => {
+  // Create a new QueryClient instance inside the component
+  const queryClient = new QueryClient();
+
   return (
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
