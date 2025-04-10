@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStore } from '@/lib/store';
@@ -39,17 +38,23 @@ const Category = () => {
   
   const category = CATEGORIES.find((cat) => cat.slug === categoryId);
   
-  // Fetch data from Supabase when component mounts
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       
       try {
-        // Fetch code snippets
+        if (!category || !category.id) {
+          console.error("Category not found or missing ID");
+          setLoading(false);
+          return;
+        }
+
+        const categoryUUID = category.id;
+        
         const { data: snippetData, error: snippetError } = await supabase
           .from('code_snippets')
           .select('*')
-          .eq('category_id', category?.id);
+          .eq('category_id', categoryUUID);
           
         if (snippetError) {
           console.error("Error fetching code snippets:", snippetError);
@@ -68,11 +73,10 @@ const Category = () => {
           setLocalCodeSnippets(snippets);
         }
         
-        // Fetch write-ups
         const { data: writeupData, error: writeupError } = await supabase
           .from('write_ups')
           .select('*')
-          .eq('category_id', category?.id);
+          .eq('category_id', categoryUUID);
           
         if (writeupError) {
           console.error("Error fetching write-ups:", writeupError);
@@ -91,11 +95,10 @@ const Category = () => {
           setLocalWriteUps(writeups);
         }
         
-        // Fetch testing tools
         const { data: toolData, error: toolError } = await supabase
           .from('testing_tools')
           .select('*')
-          .eq('category_id', category?.id);
+          .eq('category_id', categoryUUID);
           
         if (toolError) {
           console.error("Error fetching testing tools:", toolError);
@@ -138,15 +141,15 @@ const Category = () => {
   }
   
   const filteredCodeSnippets = localCodeSnippets.filter(
-    (snippet) => snippet.categoryId === category.id && (snippet.isPublic || currentUser?.isAdmin)
+    (snippet) => snippet.categoryId === category?.id && (snippet.isPublic || currentUser?.isAdmin)
   );
   
   const filteredWriteUps = localWriteUps.filter(
-    (writeUp) => writeUp.categoryId === category.id && (writeUp.isPublic || currentUser?.isAdmin)
+    (writeUp) => writeUp.categoryId === category?.id && (writeUp.isPublic || currentUser?.isAdmin)
   );
   
   const filteredTestingTools = localTestingTools.filter(
-    (tool) => tool.categoryId === category.id && (tool.isPublic || currentUser?.isAdmin)
+    (tool) => tool.categoryId === category?.id && (tool.isPublic || currentUser?.isAdmin)
   );
   
   const openModal = (type: 'code' | 'tool' | 'writeup', title: string) => {
@@ -314,8 +317,8 @@ const Category = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">{category.name}</h1>
-        <p className="text-muted-foreground">{category.description}</p>
+        <h1 className="text-2xl font-bold mb-2">{category?.name}</h1>
+        <p className="text-muted-foreground">{category?.description}</p>
       </div>
       
       <CategoryNav />

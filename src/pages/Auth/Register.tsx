@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useStore } from '@/lib/store';
@@ -37,11 +38,43 @@ const Register = () => {
         }
       });
       
-      if (authError) throw authError;
+      if (authError) {
+        throw authError;
+      }
       
       if (authData?.user) {
-        // Profile creation should happen automatically via the database trigger now
-        // We just need to update local store for immediate UI feedback
+        console.log("User registered successfully:", authData.user);
+        
+        // Check if the profile was created by the trigger
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', authData.user.id)
+          .single();
+          
+        if (profileError) {
+          console.log("Profile may not exist yet, manually creating:", profileError);
+          
+          // Manually create profile if needed
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: authData.user.id,
+              username,
+              email,
+              is_approved: false,
+              is_admin: false
+            });
+            
+          if (insertError) {
+            console.error("Error creating profile:", insertError);
+            toast.error("Error creating user profile");
+          }
+        } else {
+          console.log("Profile created by trigger:", profileData);
+        }
+        
+        // Update local store for immediate UI feedback
         register(username, email, password);
         
         setShowAnimation(true);

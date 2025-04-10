@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import { supabase } from '@/integrations/supabase/client';
@@ -61,7 +60,11 @@ const AdminPanel = () => {
             toast.error("Error loading pending users");
           } else {
             console.log("Pending users from Supabase:", data);
-            setDbPendingUsers(data || []);
+            if (data) {
+              setDbPendingUsers(data);
+            } else {
+              setDbPendingUsers([]);
+            }
           }
         } catch (err) {
           console.error("Exception fetching pending users:", err);
@@ -92,20 +95,23 @@ const AdminPanel = () => {
 
   // Combine local pending users with those fetched directly from DB
   const allPendingUsers = [...pendingUsers];
+  
   // Add DB users that aren't already in the local state
-  dbPendingUsers.forEach(dbUser => {
-    if (!allPendingUsers.some(localUser => localUser.id === dbUser.id)) {
-      allPendingUsers.push({
-        id: dbUser.id,
-        username: dbUser.username,
-        email: dbUser.email,
-        password: '',
-        isAdmin: dbUser.is_admin,
-        isApproved: false,
-        createdAt: new Date(dbUser.created_at)
-      });
-    }
-  });
+  if (dbPendingUsers && dbPendingUsers.length > 0) {
+    dbPendingUsers.forEach(dbUser => {
+      if (!allPendingUsers.some(localUser => localUser.id === dbUser.id)) {
+        allPendingUsers.push({
+          id: dbUser.id,
+          username: dbUser.username,
+          email: dbUser.email,
+          password: '',
+          isAdmin: dbUser.is_admin,
+          isApproved: false,
+          createdAt: new Date(dbUser.created_at)
+        });
+      }
+    });
+  }
 
   const handleApproveUser = async (userId: string) => {
     try {
