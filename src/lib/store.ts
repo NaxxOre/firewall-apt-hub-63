@@ -630,7 +630,7 @@ export const useStore = create<AppState>()(
         });
       },
       
-      updatePostVisibility: (postId: string, isPublic: boolean) => {
+      updatePostVisibility: async (postId: string, isPublic: boolean) => {
         const { posts } = get();
         
         // Update in Supabase
@@ -655,8 +655,24 @@ export const useStore = create<AppState>()(
         });
       },
       
-      updateCodeSnippetVisibility: (snippetId: string, isPublic: boolean) => {
+      updateCodeSnippetVisibility: async (snippetId: string, isPublic: boolean) => {
         const { codeSnippets } = get();
+        
+        // Update in Supabase
+        try {
+          const { error } = await supabase
+            .from('code_snippets')
+            .update({ is_public: isPublic })
+            .eq('id', snippetId);
+          
+          if (error) {
+            console.error("Error updating code snippet visibility in Supabase:", error);
+          }
+        } catch (error) {
+          console.error("Error in updateCodeSnippetVisibility:", error);
+        }
+        
+        // Update local state
         set({
           codeSnippets: codeSnippets.map((snippet) =>
             snippet.id === snippetId ? { ...snippet, isPublic } : snippet
@@ -664,8 +680,24 @@ export const useStore = create<AppState>()(
         });
       },
       
-      updateWriteUpVisibility: (writeUpId: string, isPublic: boolean) => {
+      updateWriteUpVisibility: async (writeUpId: string, isPublic: boolean) => {
         const { writeUps } = get();
+        
+        // Update in Supabase
+        try {
+          const { error } = await supabase
+            .from('write_ups')
+            .update({ is_public: isPublic })
+            .eq('id', writeUpId);
+          
+          if (error) {
+            console.error("Error updating write-up visibility in Supabase:", error);
+          }
+        } catch (error) {
+          console.error("Error in updateWriteUpVisibility:", error);
+        }
+        
+        // Update local state
         set({
           writeUps: writeUps.map((writeUp) =>
             writeUp.id === writeUpId ? { ...writeUp, isPublic } : writeUp
@@ -673,8 +705,24 @@ export const useStore = create<AppState>()(
         });
       },
       
-      updateTestingToolVisibility: (toolId: string, isPublic: boolean) => {
+      updateTestingToolVisibility: async (toolId: string, isPublic: boolean) => {
         const { testingTools } = get();
+        
+        // Update in Supabase
+        try {
+          const { error } = await supabase
+            .from('testing_tools')
+            .update({ is_public: isPublic })
+            .eq('id', toolId);
+          
+          if (error) {
+            console.error("Error updating testing tool visibility in Supabase:", error);
+          }
+        } catch (error) {
+          console.error("Error in updateTestingToolVisibility:", error);
+        }
+        
+        // Update local state
         set({
           testingTools: testingTools.map((tool) =>
             tool.id === toolId ? { ...tool, isPublic } : tool
@@ -682,8 +730,24 @@ export const useStore = create<AppState>()(
         });
       },
       
-      updateCTFComponentVisibility: (componentId: string, isPublic: boolean) => {
+      updateCTFComponentVisibility: async (componentId: string, isPublic: boolean) => {
         const { ctfComponents } = get();
+        
+        // Update in Supabase
+        try {
+          const { error } = await supabase
+            .from('ctf_components')
+            .update({ is_public: isPublic })
+            .eq('id', componentId);
+          
+          if (error) {
+            console.error("Error updating CTF component visibility in Supabase:", error);
+          }
+        } catch (error) {
+          console.error("Error in updateCTFComponentVisibility:", error);
+        }
+        
+        // Update local state
         set({
           ctfComponents: ctfComponents.map((component) =>
             component.id === componentId ? { ...component, isPublic } : component
@@ -691,8 +755,24 @@ export const useStore = create<AppState>()(
         });
       },
       
-      updateYoutubeChannelVisibility: (channelId: string, isPublic: boolean) => {
+      updateYoutubeChannelVisibility: async (channelId: string, isPublic: boolean) => {
         const { youtubeChannels } = get();
+        
+        // Update in Supabase
+        try {
+          const { error } = await supabase
+            .from('youtube_channels')
+            .update({ is_public: isPublic })
+            .eq('id', channelId);
+          
+          if (error) {
+            console.error("Error updating YouTube channel visibility in Supabase:", error);
+          }
+        } catch (error) {
+          console.error("Error in updateYoutubeChannelVisibility:", error);
+        }
+        
+        // Update local state
         set({
           youtubeChannels: youtubeChannels.map((channel) =>
             channel.id === channelId ? { ...channel, isPublic } : channel
