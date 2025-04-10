@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { supabase } from '@/lib/supabaseClient'; 
 
 interface AddCodeSnippetProps {
   closeModal?: () => void;
@@ -42,6 +43,33 @@ const AddCodeSnippet: React.FC<AddCodeSnippetProps> = ({ closeModal }) => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
+      if (!currentUser) {
+        toast.error('You must be logged in to add a code snippet');
+        return;
+      }
+      
+      // Insert to Supabase
+      const { data, error } = await supabase
+        .from('code_snippets')
+        .insert({
+          title: values.title,
+          content: values.code,
+          code: values.code,
+          category_id: values.categoryId,
+          description: values.description || '',
+          is_public: currentUser?.isAdmin ? values.isPublic : true,
+          author_id: currentUser.id,
+          created_at: new Date().toISOString(),
+        })
+        .select();
+      
+      if (error) {
+        console.error('Error adding code snippet:', error);
+        toast.error('Failed to add code snippet: ' + error.message);
+        return;
+      }
+      
+      // Also update local store for immediate UI update
       addCodeSnippet({
         title: values.title,
         code: values.code,

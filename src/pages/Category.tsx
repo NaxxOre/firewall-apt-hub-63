@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStore } from '@/lib/store';
 import { CATEGORIES, CATEGORY_SECTIONS } from '@/lib/constants';
@@ -13,10 +14,13 @@ import CodeSnippetDisplay from '@/components/CodeSnippetDisplay';
 import TestingToolDisplay from '@/components/TestingToolDisplay';
 import ContentCard from '@/components/ContentCard';
 import ContentActions from '@/components/ContentActions';
+import { supabase } from '@/lib/supabaseClient';
+import { CodeSnippet, WriteUp, TestingTool } from '@/types';
+import { toast } from 'sonner';
 
 const Category = () => {
   const { categoryId = '', sectionId = 'codes' } = useParams<{ categoryId: string; sectionId: string }>();
-  const { codeSnippets, writeUps, testingTools, isAuthenticated, currentUser } = useStore();
+  const { codeSnippets: storeCodeSnippets, writeUps: storeWriteUps, testingTools: storeTestingTools, isAuthenticated, currentUser } = useStore();
   const [modalOpen, setModalOpen] = useState<{
     isOpen: boolean,
     type: 'code' | 'tool' | 'writeup',
@@ -27,9 +31,117 @@ const Category = () => {
     title: ''
   });
   
+  const [codeSnippets, setCodeSnippets] = useState<CodeSnippet[]>([]);
+  const [writeUps, setWriteUps] = useState<WriteUp[]>([]);
+  const [testingTools, setTestingTools] = useState<TestingTool[]>([]);
+  const [loading, setLoading] = useState(true);
+  
   const navigate = useNavigate();
   
   const category = CATEGORIES.find((cat) => cat.slug === categoryId);
+  
+  useEffect(() => {
+    const fetchCategoryData = async () => {
+      setLoading(true);
+      try {
+        // Fetch code snippets for this category
+        if (sectionId === 'codes') {
+          const { data: snippetsData, error: snippetsError } = await supabase
+            .from('code_snippets')
+            .select('*')
+            .eq('category_id', category?.id || '')
+            .order('created_at', { ascending: false });
+          
+          if (snippetsError) {
+            console.error('Error fetching code snippets:', snippetsError);
+            toast.error('Failed to fetch code snippets');
+          } else {
+            // Transform snake_case to camelCase for frontend components
+            const formattedSnippets = snippetsData?.map(item => ({
+              id: item.id,
+              title: item.title,
+              content: item.content,
+              code: item.code || item.content,
+              description: item.description || '',
+              categoryId: item.category_id,
+              isPublic: item.is_public,
+              createdAt: new Date(item.created_at),
+              authorId: item.author_id
+            })) || [];
+            
+            setCodeSnippets(formattedSnippets);
+          }
+        }
+        
+        // Fetch write-ups for this category
+        if (sectionId === 'writeups') {
+          const { data: writeUpsData, error: writeUpsError } = await supabase
+            .from('write_ups')
+            .select('*')
+            .eq('category_id', category?.id || '')
+            .order('created_at', { ascending: false });
+          
+          if (writeUpsError) {
+            console.error('Error fetching write-ups:', writeUpsError);
+            toast.error('Failed to fetch write-ups');
+          } else {
+            // Transform snake_case to camelCase for frontend components
+            const formattedWriteUps = writeUpsData?.map(item => ({
+              id: item.id,
+              title: item.title,
+              url: item.url,
+              link: item.url,
+              description: item.description || '',
+              categoryId: item.category_id,
+              isPublic: item.is_public,
+              createdAt: new Date(item.created_at),
+              authorId: item.author_id
+            })) || [];
+            
+            setWriteUps(formattedWriteUps);
+          }
+        }
+        
+        // Fetch testing tools for this category
+        if (sectionId === 'testing-tools') {
+          const { data: toolsData, error: toolsError } = await supabase
+            .from('testing_tools')
+            .select('*')
+            .eq('category_id', category?.id || '')
+            .order('created_at', { ascending: false });
+          
+          if (toolsError) {
+            console.error('Error fetching testing tools:', toolsError);
+            toast.error('Failed to fetch testing tools');
+          } else {
+            // Transform snake_case to camelCase for frontend components
+            const formattedTools = toolsData?.map(item => ({
+              id: item.id,
+              title: item.title,
+              content: item.content,
+              code: item.code || item.content,
+              description: item.description || '',
+              categoryId: item.category_id,
+              isPublic: item.is_public,
+              createdAt: new Date(item.created_at),
+              authorId: item.author_id
+            })) || [];
+            
+            setTestingTools(formattedTools);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching data for category:', error);
+        toast.error('Failed to load category data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (category) {
+      fetchCategoryData();
+    }
+  }, [categoryId, sectionId, category]);
   
   if (!category) {
     console.error(`Category not found for slug: ${categoryId}`);
@@ -43,15 +155,15 @@ const Category = () => {
   }
   
   const filteredCodeSnippets = codeSnippets.filter(
-    (snippet) => snippet.categoryId === category.id && (snippet.isPublic || currentUser?.isAdmin)
+    (snippet) => snippet.isPublic || currentUser?.isAdmin
   );
   
   const filteredWriteUps = writeUps.filter(
-    (writeUp) => writeUp.categoryId === category.id && (writeUp.isPublic || currentUser?.isAdmin)
+    (writeUp) => writeUp.isPublic || currentUser?.isAdmin
   );
   
   const filteredTestingTools = testingTools.filter(
-    (tool) => tool.categoryId === category.id && (tool.isPublic || currentUser?.isAdmin)
+    (tool) => tool.isPublic || currentUser?.isAdmin
   );
   
   const openModal = (type: 'code' | 'tool' | 'writeup', title: string) => {
@@ -68,6 +180,15 @@ const Category = () => {
   };
   
   const renderContent = () => {
+    // Show loading state
+    if (loading) {
+      return (
+        <div className="text-center py-10">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      );
+    }
+    
     switch (sectionId) {
       case 'codes':
         return (
@@ -215,6 +336,10 @@ const Category = () => {
         );
     }
   };
+
+  const handleCloseModal = () => {
+    setModalOpen({ ...modalOpen, isOpen: false });
+  };
   
   return (
     <div className="container mx-auto px-4 py-8">
@@ -238,7 +363,7 @@ const Category = () => {
                 Fill in the details below to add a new code snippet.
               </DialogDescription>
             </DialogHeader>
-            <AddCodeSnippet closeModal={() => setModalOpen({ ...modalOpen, isOpen: false })} />
+            <AddCodeSnippet closeModal={handleCloseModal} />
           </DialogContent>
         </Dialog>
       )}
@@ -252,18 +377,28 @@ const Category = () => {
                 Fill in the details below to add a new testing tool.
               </DialogDescription>
             </DialogHeader>
-            <AddTestingTool closeModal={() => setModalOpen({ ...modalOpen, isOpen: false })} />
+            <AddTestingTool closeModal={handleCloseModal} />
           </DialogContent>
         </Dialog>
       )}
 
       {modalOpen.type === 'writeup' && (
-        <AddContentModal
-          open={modalOpen.isOpen}
-          onOpenChange={(isOpen) => setModalOpen({ ...modalOpen, isOpen })}
-          type="writeup"
-          title="Add Write-up"
-        />
+        <Dialog open={modalOpen.isOpen} onOpenChange={(isOpen) => setModalOpen({ ...modalOpen, isOpen })}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Add Write-up</DialogTitle>
+              <DialogDescription>
+                Fill in the details below to add a new write-up.
+              </DialogDescription>
+            </DialogHeader>
+            <AddContentModal
+              type="writeup"
+              title="Add Write-up"
+              open={modalOpen.isOpen}
+              onOpenChange={(isOpen) => setModalOpen({ ...modalOpen, isOpen })}
+            />
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
