@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,6 +12,7 @@ const Forum = () => {
   const { posts: localPosts, currentUser } = useStore();
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [replyCounts, setReplyCounts] = useState<Record<string, number>>({});
   const navigate = useNavigate();
   
   useEffect(() => {
@@ -20,7 +22,7 @@ const Forum = () => {
         // First try to fetch from Supabase
         const { data, error } = await supabase
           .from('posts')
-          .select('*')
+          .select('*, profiles:author_id(username)')
           .filter('parent_id', 'is', null)
           .order('created_at', { ascending: false });
         
@@ -35,7 +37,7 @@ const Forum = () => {
             title: post.title,
             content: post.content,
             authorId: post.author_id,
-            authorName: post.author_name || 'Unknown', // We might need to fetch author names separately
+            authorName: post.profiles?.username || 'Unknown', // Get username from the joined profiles table
             isPublic: post.is_public,
             createdAt: new Date(post.created_at),
             parentId: post.parent_id,
@@ -47,6 +49,9 @@ const Forum = () => {
           }));
           
           setPosts(formattedPosts);
+          
+          // Fetch reply counts for all posts at once
+          fetchReplyCounts(data.map(post => post.id));
         } else {
           // If no posts in Supabase, use local posts
           setPosts(localPosts.filter(post => !post.parentId));
@@ -62,25 +67,42 @@ const Forum = () => {
     fetchPosts();
   }, [localPosts]);
   
-  // Get reply counts for each post
-  const getReplyCount = async (postId: string) => {
+  // Get reply counts for all posts at once
+  const fetchReplyCounts = async (postIds: string[]) => {
     try {
       const { data, error } = await supabase
         .from('posts')
-        .select('id')
-        .eq('parent_id', postId);
+        .select('parent_id, count')
+        .in('parent_id', postIds)
+        .count();
       
       if (error) {
-        console.error("Error fetching reply count:", error);
-        // Fallback to local posts
-        return localPosts.filter(post => post.parentId === postId).length;
+        console.error("Error fetching reply counts:", error);
+        return;
       }
       
-      return data.length;
+      // Group by parent_id and count
+      const counts: Record<string, number> = {};
+      
+      for (const postId of postIds) {
+        // Find count from data or default to count from local posts
+        const dataItem = data.find(item => item.parent_id === postId);
+        if (dataItem) {
+          counts[postId] = parseInt(dataItem.count, 10);
+        } else {
+          counts[postId] = localPosts.filter(post => post.parentId === postId).length;
+        }
+      }
+      
+      setReplyCounts(counts);
     } catch (error) {
-      console.error("Error in getReplyCount:", error);
-      return localPosts.filter(post => post.parentId === postId).length;
+      console.error("Error in fetchReplyCounts:", error);
     }
+  };
+  
+  // Get reply count for a specific post
+  const getReplyCount = (postId: string) => {
+    return replyCounts[postId] || 0;
   };
 
   return (
