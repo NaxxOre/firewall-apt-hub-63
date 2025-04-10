@@ -607,8 +607,30 @@ export const useStore = create<AppState>()(
         set({ youtubeChannels: [...youtubeChannels, newChannel] });
       },
       
-      // Updates for visibility toggles
-      updatePostVisibility: async (postId, isPublic) => {
+      deleteYoutubeChannel: async (channelId: string) => {
+        const { youtubeChannels } = get();
+        
+        // Delete from Supabase
+        try {
+          const { error } = await supabase
+            .from('youtube_channels')
+            .delete()
+            .eq('id', channelId);
+          
+          if (error) {
+            console.error("Error deleting YouTube channel from Supabase:", error);
+          }
+        } catch (error) {
+          console.error("Error in deleteYoutubeChannel:", error);
+        }
+        
+        // Update local state
+        set({
+          youtubeChannels: youtubeChannels.filter((channel) => channel.id !== channelId),
+        });
+      },
+      
+      updatePostVisibility: (postId: string, isPublic: boolean) => {
         const { posts } = get();
         
         // Update in Supabase
@@ -633,7 +655,7 @@ export const useStore = create<AppState>()(
         });
       },
       
-      updateCodeSnippetVisibility: (snippetId, isPublic) => {
+      updateCodeSnippetVisibility: (snippetId: string, isPublic: boolean) => {
         const { codeSnippets } = get();
         set({
           codeSnippets: codeSnippets.map((snippet) =>
@@ -642,7 +664,7 @@ export const useStore = create<AppState>()(
         });
       },
       
-      updateWriteUpVisibility: (writeUpId, isPublic) => {
+      updateWriteUpVisibility: (writeUpId: string, isPublic: boolean) => {
         const { writeUps } = get();
         set({
           writeUps: writeUps.map((writeUp) =>
@@ -651,7 +673,7 @@ export const useStore = create<AppState>()(
         });
       },
       
-      updateTestingToolVisibility: (toolId, isPublic) => {
+      updateTestingToolVisibility: (toolId: string, isPublic: boolean) => {
         const { testingTools } = get();
         set({
           testingTools: testingTools.map((tool) =>
@@ -660,7 +682,7 @@ export const useStore = create<AppState>()(
         });
       },
       
-      updateCTFComponentVisibility: (componentId, isPublic) => {
+      updateCTFComponentVisibility: (componentId: string, isPublic: boolean) => {
         const { ctfComponents } = get();
         set({
           ctfComponents: ctfComponents.map((component) =>
@@ -669,7 +691,7 @@ export const useStore = create<AppState>()(
         });
       },
       
-      updateYoutubeChannelVisibility: (channelId, isPublic) => {
+      updateYoutubeChannelVisibility: (channelId: string, isPublic: boolean) => {
         const { youtubeChannels } = get();
         set({
           youtubeChannels: youtubeChannels.map((channel) =>
