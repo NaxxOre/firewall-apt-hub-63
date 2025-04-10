@@ -1,25 +1,69 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import { ExternalLink, Lock, Youtube } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import ContentActions from '@/components/ContentActions';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 const YoutubeChannels = () => {
-  const { youtubeChannels, currentUser, isAuthenticated } = useStore();
+  const { currentUser, isAuthenticated } = useStore();
+  const [youtubeChannels, setYoutubeChannels] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    const fetchChannels = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('youtube_channels')
+          .select('*');
+          
+        if (error) throw error;
+        
+        setYoutubeChannels(data || []);
+      } catch (error) {
+        console.error('Error fetching YouTube channels:', error);
+        toast.error('Failed to load YouTube channels');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchChannels();
+  }, []);
   
   // Get visible channels based on user status
   const visibleChannels = youtubeChannels.filter(channel => {
-    if (!isAuthenticated) return channel.isPublic;
+    if (!isAuthenticated) return channel.is_public;
     if (currentUser?.isAdmin) return true;
-    return channel.isPublic;
+    return channel.is_public;
   });
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <p>Loading YouTube channels...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">YouTube Channels</h1>
-        <p className="text-muted-foreground">
-          Curated YouTube channels for cybersecurity learning and research
-        </p>
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">YouTube Channels</h1>
+          <p className="text-muted-foreground">
+            Curated YouTube channels for cybersecurity learning and research
+          </p>
+        </div>
+        
+        {isAuthenticated && (
+          <Button onClick={() => navigate('/user')}>Add Channel</Button>
+        )}
       </div>
 
       {!isAuthenticated && (
@@ -46,20 +90,32 @@ const YoutubeChannels = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {visibleChannels.map((channel) => (
             <div key={channel.id} className="bg-card border border-border rounded-lg overflow-hidden">
-              {channel.thumbnailUrl && (
+              {channel.thumbnail_url && (
                 <div className="aspect-video w-full overflow-hidden">
                   <img 
-                    src={channel.thumbnailUrl} 
+                    src={channel.thumbnail_url} 
                     alt={channel.name}
                     className="w-full h-full object-cover"
                   />
                 </div>
               )}
               <div className="p-4">
-                <h3 className="font-medium mb-1 flex items-center">
-                  <Youtube className="text-red-500 mr-2" size={18} />
-                  {channel.name}
-                </h3>
+                <div className="flex justify-between items-start">
+                  <h3 className="font-medium mb-1 flex items-center">
+                    <Youtube className="text-red-500 mr-2" size={18} />
+                    {channel.name}
+                  </h3>
+                  
+                  {currentUser && (currentUser.isAdmin || currentUser.id === channel.author_id) && (
+                    <ContentActions 
+                      id={channel.id}
+                      title={channel.name}
+                      type="youtube"
+                      isPublic={channel.is_public}
+                    />
+                  )}
+                </div>
+                
                 {channel.description && (
                   <p className="text-sm text-muted-foreground mb-3">
                     {channel.description}

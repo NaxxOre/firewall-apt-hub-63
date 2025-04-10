@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 interface AddCodeSnippetProps {
   closeModal?: () => void;
@@ -27,7 +29,8 @@ const formSchema = z.object({
 });
 
 const AddCodeSnippet: React.FC<AddCodeSnippetProps> = ({ closeModal }) => {
-  const { addCodeSnippet, currentUser } = useStore();
+  const { currentUser } = useStore();
+  const navigate = useNavigate();
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -42,18 +45,35 @@ const AddCodeSnippet: React.FC<AddCodeSnippetProps> = ({ closeModal }) => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      addCodeSnippet({
+      const session = await supabase.auth.getSession();
+      
+      if (!session.data.session) {
+        toast.error('You must be logged in to add a code snippet');
+        navigate('/login');
+        return;
+      }
+      
+      const { error } = await supabase.from('code_snippets').insert({
         title: values.title,
         code: values.code,
         content: values.code,
-        categoryId: values.categoryId,
+        category_id: values.categoryId,
         description: values.description || '',
-        isPublic: currentUser?.isAdmin ? values.isPublic : true,
+        is_public: values.isPublic,
+        author_id: session.data.session.user.id
       });
+      
+      if (error) {
+        throw error;
+      }
       
       toast.success('Code snippet added successfully');
       form.reset();
       if (closeModal) closeModal();
+      
+      // Refresh the page to show the new snippet
+      window.location.reload();
+      
     } catch (error) {
       console.error('Error adding code snippet:', error);
       toast.error('Failed to add code snippet. Please try again.');
@@ -147,28 +167,26 @@ const AddCodeSnippet: React.FC<AddCodeSnippetProps> = ({ closeModal }) => {
             )}
           />
           
-          {currentUser?.isAdmin && (
-            <FormField
-              control={form.control}
-              name="isPublic"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Visibility</FormLabel>
-                    <FormDescription>
-                      Make this code snippet visible to all users
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          )}
+          <FormField
+            control={form.control}
+            name="isPublic"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">Visibility</FormLabel>
+                  <FormDescription>
+                    Make this code snippet visible to all users
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
           
           <Button type="submit" className="w-full">Add Code Snippet</Button>
         </form>

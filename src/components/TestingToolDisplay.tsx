@@ -10,10 +10,12 @@ interface TestingToolDisplayProps {
 }
 
 const TestingToolDisplay: React.FC<TestingToolDisplayProps> = ({ tool }) => {
+  const isPublic = tool.is_public !== undefined ? tool.is_public : tool.isPublic;
+  
   return (
-    <ContentCard title={tool.title} isPublic={tool.isPublic}>
+    <ContentCard title={tool.title} isPublic={isPublic}>
       <div className="mb-3">
-        <CodeDisplayBox content={tool.content} maxHeight="300px" />
+        <CodeDisplayBox content={tool.content || tool.code} maxHeight="300px" />
       </div>
       {tool.description && (
         <p className="text-sm text-muted-foreground mt-2 mb-3">{tool.description}</p>
@@ -23,7 +25,7 @@ const TestingToolDisplay: React.FC<TestingToolDisplayProps> = ({ tool }) => {
           id={tool.id}
           title={tool.title}
           type="tool"
-          isPublic={tool.isPublic}
+          isPublic={isPublic}
         />
       </div>
     </ContentCard>

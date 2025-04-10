@@ -10,10 +10,12 @@ interface CodeSnippetDisplayProps {
 }
 
 const CodeSnippetDisplay: React.FC<CodeSnippetDisplayProps> = ({ snippet }) => {
+  const isPublic = snippet.is_public !== undefined ? snippet.is_public : snippet.isPublic;
+  
   return (
-    <ContentCard title={snippet.title} isPublic={snippet.isPublic}>
+    <ContentCard title={snippet.title} isPublic={isPublic}>
       <div className="mb-3">
-        <CodeDisplayBox content={snippet.content} maxHeight="300px" />
+        <CodeDisplayBox content={snippet.content || snippet.code} maxHeight="300px" />
       </div>
       {snippet.description && (
         <p className="text-sm text-muted-foreground mt-2 mb-3">{snippet.description}</p>
@@ -23,7 +25,7 @@ const CodeSnippetDisplay: React.FC<CodeSnippetDisplayProps> = ({ snippet }) => {
           id={snippet.id}
           title={snippet.title}
           type="code"
-          isPublic={snippet.isPublic}
+          isPublic={isPublic}
         />
       </div>
     </ContentCard>

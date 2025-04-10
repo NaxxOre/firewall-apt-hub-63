@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStore } from '@/lib/store';
 import { CATEGORIES, CATEGORY_SECTIONS } from '@/lib/constants';
@@ -13,10 +14,15 @@ import CodeSnippetDisplay from '@/components/CodeSnippetDisplay';
 import TestingToolDisplay from '@/components/TestingToolDisplay';
 import ContentCard from '@/components/ContentCard';
 import ContentActions from '@/components/ContentActions';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const Category = () => {
   const { categoryId = '', sectionId = 'codes' } = useParams<{ categoryId: string; sectionId: string }>();
-  const { codeSnippets, writeUps, testingTools, isAuthenticated, currentUser } = useStore();
+  const [codeSnippets, setCodeSnippets] = useState([]);
+  const [writeUps, setWriteUps] = useState([]);
+  const [testingTools, setTestingTools] = useState([]);
+  const { isAuthenticated, currentUser } = useStore();
   const [modalOpen, setModalOpen] = useState<{
     isOpen: boolean,
     type: 'code' | 'tool' | 'writeup',
@@ -26,10 +32,52 @@ const Category = () => {
     type: 'code',
     title: ''
   });
+  const [loading, setLoading] = useState(true);
   
   const navigate = useNavigate();
   
   const category = CATEGORIES.find((cat) => cat.slug === categoryId);
+  
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        // Fetch data from Supabase based on category
+        if (category) {
+          const { data: snippetsData, error: snippetsError } = await supabase
+            .from('code_snippets')
+            .select('*')
+            .eq('category_id', category.id);
+            
+          if (snippetsError) throw snippetsError;
+          setCodeSnippets(snippetsData || []);
+          
+          const { data: writeUpsData, error: writeUpsError } = await supabase
+            .from('write_ups')
+            .select('*')
+            .eq('category_id', category.id);
+            
+          if (writeUpsError) throw writeUpsError;
+          setWriteUps(writeUpsData || []);
+          
+          const { data: toolsData, error: toolsError } = await supabase
+            .from('testing_tools')
+            .select('*')
+            .eq('category_id', category.id);
+            
+          if (toolsError) throw toolsError;
+          setTestingTools(toolsData || []);
+        }
+      } catch (error) {
+        console.error('Error loading category data:', error);
+        toast.error('Failed to load category data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadData();
+  }, [categoryId, category]);
   
   if (!category) {
     console.error(`Category not found for slug: ${categoryId}`);
@@ -41,18 +89,6 @@ const Category = () => {
       </div>
     );
   }
-  
-  const filteredCodeSnippets = codeSnippets.filter(
-    (snippet) => snippet.categoryId === category.id && (snippet.isPublic || currentUser?.isAdmin)
-  );
-  
-  const filteredWriteUps = writeUps.filter(
-    (writeUp) => writeUp.categoryId === category.id && (writeUp.isPublic || currentUser?.isAdmin)
-  );
-  
-  const filteredTestingTools = testingTools.filter(
-    (tool) => tool.categoryId === category.id && (tool.isPublic || currentUser?.isAdmin)
-  );
   
   const openModal = (type: 'code' | 'tool' | 'writeup', title: string) => {
     if (!isAuthenticated) {
@@ -68,6 +104,14 @@ const Category = () => {
   };
   
   const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="text-center py-10">
+          <p>Loading {sectionId} content...</p>
+        </div>
+      );
+    }
+    
     switch (sectionId) {
       case 'codes':
         return (
@@ -84,7 +128,7 @@ const Category = () => {
               </Button>
             </div>
             
-            {filteredCodeSnippets.length === 0 ? (
+            {codeSnippets.length === 0 ? (
               <div className="text-center py-10 border border-dashed rounded-lg">
                 <h3 className="text-lg font-medium mb-2">No Code Snippets</h3>
                 <p className="text-muted-foreground mb-4">
@@ -100,7 +144,7 @@ const Category = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredCodeSnippets.map((snippet) => (
+                {codeSnippets.map((snippet) => (
                   <CodeSnippetDisplay key={snippet.id} snippet={snippet} />
                 ))}
               </div>
@@ -123,7 +167,7 @@ const Category = () => {
               </Button>
             </div>
             
-            {filteredWriteUps.length === 0 ? (
+            {writeUps.length === 0 ? (
               <div className="text-center py-10 border border-dashed rounded-lg">
                 <h3 className="text-lg font-medium mb-2">No Write-ups</h3>
                 <p className="text-muted-foreground mb-4">
@@ -139,8 +183,8 @@ const Category = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredWriteUps.map((writeUp) => (
-                  <ContentCard key={writeUp.id} title={writeUp.title} isPublic={writeUp.isPublic}>
+                {writeUps.map((writeUp) => (
+                  <ContentCard key={writeUp.id} title={writeUp.title} isPublic={writeUp.is_public}>
                     <a 
                       href={writeUp.url} 
                       target="_blank" 
@@ -157,7 +201,7 @@ const Category = () => {
                         id={writeUp.id}
                         title={writeUp.title}
                         type="writeup"
-                        isPublic={writeUp.isPublic}
+                        isPublic={writeUp.is_public}
                       />
                     </div>
                   </ContentCard>
@@ -182,7 +226,7 @@ const Category = () => {
               </Button>
             </div>
             
-            {filteredTestingTools.length === 0 ? (
+            {testingTools.length === 0 ? (
               <div className="text-center py-10 border border-dashed rounded-lg">
                 <h3 className="text-lg font-medium mb-2">No Testing Tools</h3>
                 <p className="text-muted-foreground mb-4">
@@ -198,7 +242,7 @@ const Category = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredTestingTools.map((tool) => (
+                {testingTools.map((tool) => (
                   <TestingToolDisplay key={tool.id} tool={tool} />
                 ))}
               </div>
@@ -231,39 +275,47 @@ const Category = () => {
       
       {modalOpen.type === 'code' && (
         <Dialog open={modalOpen.isOpen} onOpenChange={(isOpen) => setModalOpen({ ...modalOpen, isOpen })}>
-          <DialogContent className="sm:max-w-[600px]">
+          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Add Code Snippet</DialogTitle>
+              <DialogTitle>{modalOpen.title}</DialogTitle>
               <DialogDescription>
-                Fill in the details below to add a new code snippet.
+                Add a new code snippet to the {category.name} category.
               </DialogDescription>
             </DialogHeader>
             <AddCodeSnippet closeModal={() => setModalOpen({ ...modalOpen, isOpen: false })} />
           </DialogContent>
         </Dialog>
       )}
-
+      
       {modalOpen.type === 'tool' && (
         <Dialog open={modalOpen.isOpen} onOpenChange={(isOpen) => setModalOpen({ ...modalOpen, isOpen })}>
-          <DialogContent className="sm:max-w-[600px]">
+          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Add Testing Tool</DialogTitle>
+              <DialogTitle>{modalOpen.title}</DialogTitle>
               <DialogDescription>
-                Fill in the details below to add a new testing tool.
+                Add a new testing tool to the {category.name} category.
               </DialogDescription>
             </DialogHeader>
             <AddTestingTool closeModal={() => setModalOpen({ ...modalOpen, isOpen: false })} />
           </DialogContent>
         </Dialog>
       )}
-
+      
       {modalOpen.type === 'writeup' && (
-        <AddContentModal
-          open={modalOpen.isOpen}
-          onOpenChange={(isOpen) => setModalOpen({ ...modalOpen, isOpen })}
-          type="writeup"
-          title="Add Write-up"
-        />
+        <Dialog open={modalOpen.isOpen} onOpenChange={(isOpen) => setModalOpen({ ...modalOpen, isOpen })}>
+          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{modalOpen.title}</DialogTitle>
+              <DialogDescription>
+                Add a new write-up to the {category.name} category.
+              </DialogDescription>
+            </DialogHeader>
+            <AddContentModal 
+              type="writeup" 
+              closeModal={() => setModalOpen({ ...modalOpen, isOpen: false })} 
+            />
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

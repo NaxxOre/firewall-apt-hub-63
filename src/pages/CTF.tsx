@@ -1,14 +1,39 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import { Copy, Lock, Unlock, MoveRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 const CTF = () => {
-  const { ctfComponents, isAuthenticated } = useStore();
+  const { isAuthenticated } = useStore();
   const navigate = useNavigate();
+  const [ctfComponents, setCtfComponents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCTFComponents = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('ctf_components')
+          .select('*');
+          
+        if (error) throw error;
+        
+        setCtfComponents(data || []);
+      } catch (error) {
+        console.error('Error fetching CTF components:', error);
+        toast.error('Failed to load CTF components');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCTFComponents();
+  }, []);
 
   // Group CTF components by base name (removing the " - Link", " - Team", etc.)
   const groupedComponents = ctfComponents.reduce((acc, component) => {
@@ -29,13 +54,21 @@ const CTF = () => {
 
   // Filter out components that should not be shown to non-authenticated users
   const filterComponents = (components: typeof ctfComponents) => {
-    return components.filter(comp => isAuthenticated || comp.isPublic);
+    return components.filter(comp => isAuthenticated || comp.is_public);
   };
 
   // Check if a CTF has specific component type
   const hasComponentType = (components: typeof ctfComponents, type: string) => {
     return components.some(comp => comp.type === type);
   };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <p>Loading CTF resources...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
