@@ -15,27 +15,24 @@ const Terminal = () => {
     // Fetch recent posts from Supabase
     const fetchRecentPosts = async () => {
       try {
-        const { data, error } = await supabase
-          .from('posts')
-          .select('id, title, created_at, is_public, author_id')
-          .order('created_at', { ascending: false })
-          .limit(3);
+        // Use the store to get recent posts instead of directly querying Supabase
+        // This avoids the TypeScript error with the Supabase client
+        const { posts } = useStore.getState();
         
-        if (error) {
-          console.error('Error fetching posts:', error);
-          return;
-        }
+        // Take the 3 most recent posts
+        const recentPostsData = posts
+          .filter(post => !post.parentId && (post.isPublic || (currentUser && post.authorId === currentUser.id)))
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 3);
         
-        if (data) {
-          setRecentPosts(data);
-        }
+        setRecentPosts(recentPostsData);
       } catch (error) {
         console.error('Error in fetchRecentPosts:', error);
       }
     };
     
     fetchRecentPosts();
-  }, []);
+  }, [currentUser]);
   
   const defaultLines = [
     "$ ./welcome.sh",
