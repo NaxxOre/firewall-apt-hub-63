@@ -2,18 +2,40 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 const Terminal = () => {
-  const { isAuthenticated, currentUser, posts } = useStore();
+  const { isAuthenticated, currentUser } = useStore();
   const [displayedLines, setDisplayedLines] = useState<string[]>([]);
+  const [recentPosts, setRecentPosts] = useState<any[]>([]);
   
   const initialTerminalLine = "// Terminal";
   
-  // Get recent posts (last 3)
-  const recentPosts = posts
-    .filter(post => post.isPublic || (currentUser && (currentUser.isAdmin || post.authorId === currentUser.id)))
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 3);
+  useEffect(() => {
+    // Fetch recent posts from Supabase
+    const fetchRecentPosts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('posts')
+          .select('id, title, created_at, is_public, author_id')
+          .order('created_at', { ascending: false })
+          .limit(3);
+        
+        if (error) {
+          console.error('Error fetching posts:', error);
+          return;
+        }
+        
+        if (data) {
+          setRecentPosts(data);
+        }
+      } catch (error) {
+        console.error('Error in fetchRecentPosts:', error);
+      }
+    };
+    
+    fetchRecentPosts();
+  }, []);
   
   const defaultLines = [
     "$ ./welcome.sh",
@@ -71,7 +93,7 @@ const Terminal = () => {
 
   useEffect(() => {
     setDisplayedLines([initialTerminalLine]);
-  }, [isAuthenticated, posts.length]); // Reset and restart animation when auth status changes or new posts
+  }, [isAuthenticated, recentPosts.length]); // Reset and restart animation when auth status changes or new posts
 
   return (
     <div className="bg-[#1a1a1a] rounded-lg border border-[#333] shadow-lg text-left font-mono text-sm overflow-hidden mx-auto max-w-2xl">

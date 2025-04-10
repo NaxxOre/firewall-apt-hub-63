@@ -18,7 +18,10 @@ const Home = () => {
             Welcome to <span className="text-hacker-green">f!<span className="highlight-r">R</span>3w<span className="highlight-a">A</span>11<span className="highlight-a">A</span>pt</span>
           </h1>
           <p className="text-lg mb-6">
-            We are burmese ctf team from University of Information Technology and we are learning and sharing and seeking knowledges to improve our and your cybersecurity skills to the next level.
+            We are a Burmese CTF team from the University of Information Technology. We are learning, sharing, and seeking knowledge to improve our cybersecurity skills and yours to the next level.
+          </p>
+          <p className="text-sm mb-6">
+            Contact <a href="https://t.me/zuzip1234" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">https://t.me/zuzip1234</a> for Approval or to ask Questions.
           </p>
           
           <div className="my-8">

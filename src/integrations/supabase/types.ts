@@ -9,7 +9,346 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      categories: {
+        Row: {
+          description: string | null
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      code_snippets: {
+        Row: {
+          author_id: string
+          category_id: string | null
+          code: string
+          content: string
+          created_at: string
+          description: string | null
+          id: string
+          is_public: boolean | null
+          title: string
+        }
+        Insert: {
+          author_id: string
+          category_id?: string | null
+          code: string
+          content: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          title: string
+        }
+        Update: {
+          author_id?: string
+          category_id?: string | null
+          code?: string
+          content?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "code_snippets_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "code_snippets_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ctf_components: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string
+          id: string
+          is_public: boolean | null
+          title: string
+          type: string
+        }
+        Insert: {
+          author_id: string
+          content: string
+          created_at?: string
+          id?: string
+          is_public?: boolean | null
+          title: string
+          type: string
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_public?: boolean | null
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ctf_components_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      posts: {
+        Row: {
+          author_id: string
+          code_snippet: string | null
+          content: string
+          created_at: string
+          external_link: string | null
+          external_links: string[] | null
+          id: string
+          image_url: string | null
+          image_urls: string[] | null
+          is_public: boolean | null
+          parent_id: string | null
+          title: string
+        }
+        Insert: {
+          author_id: string
+          code_snippet?: string | null
+          content: string
+          created_at?: string
+          external_link?: string | null
+          external_links?: string[] | null
+          id?: string
+          image_url?: string | null
+          image_urls?: string[] | null
+          is_public?: boolean | null
+          parent_id?: string | null
+          title: string
+        }
+        Update: {
+          author_id?: string
+          code_snippet?: string | null
+          content?: string
+          created_at?: string
+          external_link?: string | null
+          external_links?: string[] | null
+          id?: string
+          image_url?: string | null
+          image_urls?: string[] | null
+          is_public?: boolean | null
+          parent_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          is_admin: boolean | null
+          is_approved: boolean | null
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id: string
+          is_admin?: boolean | null
+          is_approved?: boolean | null
+          username: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          is_admin?: boolean | null
+          is_approved?: boolean | null
+          username?: string
+        }
+        Relationships: []
+      }
+      testing_tools: {
+        Row: {
+          author_id: string
+          category_id: string | null
+          code: string
+          content: string
+          created_at: string
+          description: string | null
+          id: string
+          is_public: boolean | null
+          title: string
+        }
+        Insert: {
+          author_id: string
+          category_id?: string | null
+          code: string
+          content: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          title: string
+        }
+        Update: {
+          author_id?: string
+          category_id?: string | null
+          code?: string
+          content?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testing_tools_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "testing_tools_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      write_ups: {
+        Row: {
+          author_id: string
+          category_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_public: boolean | null
+          link: string
+          title: string
+          url: string
+        }
+        Insert: {
+          author_id: string
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          link: string
+          title: string
+          url: string
+        }
+        Update: {
+          author_id?: string
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          link?: string
+          title?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "write_ups_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "write_ups_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      youtube_channels: {
+        Row: {
+          author_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_public: boolean | null
+          name: string
+          thumbnail_url: string | null
+          url: string
+        }
+        Insert: {
+          author_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name: string
+          thumbnail_url?: string | null
+          url: string
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          thumbnail_url?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "youtube_channels_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
