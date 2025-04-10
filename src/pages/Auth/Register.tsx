@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useStore } from '@/lib/store';
-import { supabase } from '@/integrations/supabase/client';
 import RegistrationAnimation from '@/components/animations/RegistrationAnimation';
 import { toast } from 'sonner';
 
@@ -27,66 +26,21 @@ const Register = () => {
     setLoading(true);
     
     try {
-      // First, create the user in Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            username,
-          }
-        }
-      });
+      const success = await register(username, email, password);
       
-      if (authError) {
-        throw authError;
-      }
-      
-      if (authData?.user) {
-        console.log("User registered successfully:", authData.user);
-        
-        // Check if the profile was created by the trigger
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', authData.user.id)
-          .single();
-          
-        if (profileError) {
-          console.log("Profile may not exist yet, manually creating:", profileError);
-          
-          // Manually create profile if needed
-          const { error: insertError } = await supabase
-            .from('profiles')
-            .insert({
-              id: authData.user.id,
-              username,
-              email,
-              is_approved: false,
-              is_admin: false
-            });
-            
-          if (insertError) {
-            console.error("Error creating profile:", insertError);
-            toast.error("Error creating user profile");
-          }
-        } else {
-          console.log("Profile created by trigger:", profileData);
-        }
-        
-        // Update local store for immediate UI feedback
-        register(username, email, password);
-        
+      if (success) {
         setShowAnimation(true);
         toast.success('Registration successful! Waiting for admin approval');
         
         setTimeout(() => {
           navigate('/login');
         }, 3000);
+      } else {
+        toast.error('Username or email already exists');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Registration error:', error);
-      toast.error(error.message || 'An error occurred during registration');
+      toast.error('An error occurred during registration');
     } finally {
       setLoading(false);
     }

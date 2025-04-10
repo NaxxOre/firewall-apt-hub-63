@@ -1,61 +1,19 @@
+
 import React, { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import { Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 
 const Terminal = () => {
-  const { isAuthenticated, currentUser } = useStore();
+  const { isAuthenticated, currentUser, posts } = useStore();
   const [displayedLines, setDisplayedLines] = useState<string[]>([]);
-  const [recentPosts, setRecentPosts] = useState<any[]>([]);
   
   const initialTerminalLine = "// Terminal";
   
-  useEffect(() => {
-    // Fetch recent posts from Supabase
-    const fetchRecentPosts = async () => {
-      try {
-        // First try to get posts from Supabase
-        const { data, error } = await supabase
-          .from('posts')
-          .select('id, title, author_id, created_at, is_public')
-          .filter('parent_id', 'is', null)
-          .order('created_at', { ascending: false })
-          .limit(3);
-        
-        if (error) {
-          console.error('Error fetching posts from Supabase:', error);
-          // Fallback to local store if Supabase fetch fails
-          const { posts } = useStore.getState();
-          
-          const recentPostsData = posts
-            .filter(post => !post.parentId && (post.isPublic || (currentUser && post.authorId === currentUser.id)))
-            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-            .slice(0, 3);
-          
-          setRecentPosts(recentPostsData);
-          return;
-        }
-        
-        if (data && data.length > 0) {
-          setRecentPosts(data);
-        } else {
-          // Fallback to local store if no posts found in Supabase
-          const { posts } = useStore.getState();
-          
-          const recentPostsData = posts
-            .filter(post => !post.parentId && (post.isPublic || (currentUser && post.authorId === currentUser.id)))
-            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-            .slice(0, 3);
-          
-          setRecentPosts(recentPostsData);
-        }
-      } catch (error) {
-        console.error('Error in fetchRecentPosts:', error);
-      }
-    };
-    
-    fetchRecentPosts();
-  }, [currentUser]);
+  // Get recent posts (last 3)
+  const recentPosts = posts
+    .filter(post => post.isPublic || (currentUser && (currentUser.isAdmin || post.authorId === currentUser.id)))
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 3);
   
   const defaultLines = [
     "$ ./welcome.sh",
@@ -113,7 +71,7 @@ const Terminal = () => {
 
   useEffect(() => {
     setDisplayedLines([initialTerminalLine]);
-  }, [isAuthenticated, recentPosts.length]); // Reset and restart animation when auth status changes or new posts
+  }, [isAuthenticated, posts.length]); // Reset and restart animation when auth status changes or new posts
 
   return (
     <div className="bg-[#1a1a1a] rounded-lg border border-[#333] shadow-lg text-left font-mono text-sm overflow-hidden mx-auto max-w-2xl">

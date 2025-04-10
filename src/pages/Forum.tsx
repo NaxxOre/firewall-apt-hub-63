@@ -1,106 +1,22 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useStore } from '@/lib/store';
-import { supabase } from '@/integrations/supabase/client';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Calendar, User, MessageSquare, ExternalLink, Code, Image } from 'lucide-react';
 import ContentActions from '@/components/ContentActions';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
 
 const Forum = () => {
-  const { posts: localPosts, currentUser } = useStore();
-  const [posts, setPosts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [replyCounts, setReplyCounts] = useState<Record<string, number>>({});
+  const { posts, currentUser } = useStore();
   const navigate = useNavigate();
   
-  useEffect(() => {
-    const fetchPosts = async () => {
-      setLoading(true);
-      try {
-        // First try to fetch from Supabase
-        const { data, error } = await supabase
-          .from('posts')
-          .select('*, profiles(username)')
-          .filter('parent_id', 'is', null)
-          .order('created_at', { ascending: false });
-        
-        if (error) {
-          console.error("Error fetching posts from Supabase:", error);
-          toast.error("Error loading posts. Falling back to local data.");
-          // Fallback to local posts
-          setPosts(localPosts.filter(post => !post.parentId));
-        } else if (data && data.length > 0) {
-          // Map Supabase data to our Post format
-          const formattedPosts = data.map(post => ({
-            id: post.id,
-            title: post.title,
-            content: post.content,
-            authorId: post.author_id,
-            authorName: post.profiles?.username || 'Unknown',
-            isPublic: post.is_public,
-            createdAt: new Date(post.created_at),
-            parentId: post.parent_id,
-            codeSnippet: post.code_snippet,
-            imageUrl: post.image_url,
-            imageUrls: post.image_urls || [],
-            externalLink: post.external_link,
-            externalLinks: post.external_links || []
-          }));
-          
-          setPosts(formattedPosts);
-          
-          // Fetch reply counts for all posts at once
-          fetchReplyCounts(data.map(post => post.id));
-        } else {
-          // If no posts in Supabase, use local posts
-          setPosts(localPosts.filter(post => !post.parentId));
-        }
-      } catch (error) {
-        console.error("Error in fetchPosts:", error);
-        setPosts(localPosts.filter(post => !post.parentId));
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchPosts();
-  }, [localPosts]);
+  // Only show top-level posts (not replies)
+  const topLevelPosts = posts.filter(post => !post.parentId);
   
-  // Get reply counts for all posts at once
-  const fetchReplyCounts = async (postIds: string[]) => {
-    try {
-      // For each post ID, we need to count the number of replies
-      const counts: Record<string, number> = {};
-      
-      // Using Promise.all to fetch counts for all posts in parallel
-      await Promise.all(
-        postIds.map(async (postId) => {
-          const { count, error } = await supabase
-            .from('posts')
-            .select('*', { count: 'exact', head: true })
-            .eq('parent_id', postId);
-          
-          if (error) {
-            console.error(`Error fetching reply count for post ${postId}:`, error);
-            counts[postId] = localPosts.filter(post => post.parentId === postId).length;
-          } else {
-            counts[postId] = count || 0;
-          }
-        })
-      );
-      
-      setReplyCounts(counts);
-    } catch (error) {
-      console.error("Error in fetchReplyCounts:", error);
-    }
-  };
-  
-  // Get reply count for a specific post
+  // Get reply counts for each post
   const getReplyCount = (postId: string) => {
-    return replyCounts[postId] || 0;
+    return posts.filter(post => post.parentId === postId).length;
   };
 
   return (
@@ -115,11 +31,7 @@ const Forum = () => {
         )}
       </div>
       
-      {loading ? (
-        <div className="text-center py-10">
-          <p>Loading posts...</p>
-        </div>
-      ) : posts.length === 0 ? (
+      {topLevelPosts.length === 0 ? (
         <div className="bg-card border border-border rounded-lg p-6 text-center">
           <p className="text-muted-foreground mb-4">No posts yet. Be the first to create a post!</p>
           
@@ -143,7 +55,7 @@ const Forum = () => {
         </div>
       ) : (
         <div className="space-y-4">
-          {posts.map((post) => (
+          {topLevelPosts.map((post) => (
             <div key={post.id} className={cn(
               "bg-card border border-border rounded-lg p-6",
               !post.isPublic && "opacity-70"

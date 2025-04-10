@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { 
@@ -12,7 +11,6 @@ import {
   YoutubeChannel
 } from '../types';
 import { CATEGORIES, initialUsers, ADMIN_USER } from './constants';
-import { supabase } from '@/integrations/supabase/client';
 
 interface AppState {
   // Auth
@@ -90,81 +88,29 @@ export const useStore = create<AppState>()(
       
       // Authentication Actions
       login: async (email, password) => {
-        try {
-          // First try Supabase authentication
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password
-          });
-          
-          if (error) {
-            console.error("Supabase login error:", error);
-            // Fallback to local authentication
-            const { users } = get();
-            const user = users.find(u => u.email === email && u.password === password);
-            
-            if (user) {
-              if (!user.isApproved && !user.isAdmin) {
-                console.log("User not approved yet");
-                return false;
-              }
-              
-              set({ currentUser: user, isAuthenticated: true });
-              return true;
-            }
-            
+        const { users } = get();
+        const user = users.find(
+          (u) => u.email === email && u.password === password
+        );
+        
+        if (user) {
+          if (!user.isApproved && !user.isAdmin) {
+            console.log("User not approved yet");
             return false;
           }
           
-          if (data.user) {
-            // Get user profile from profiles table
-            const { data: profileData, error: profileError } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', data.user.id)
-              .single();
-            
-            if (profileError) {
-              console.error("Error fetching profile:", profileError);
-              return false;
-            }
-            
-            if (!profileData.is_approved && !profileData.is_admin) {
-              console.log("User not approved yet");
-              return false;
-            }
-            
-            const userData: User = {
-              id: data.user.id,
-              username: profileData.username,
-              email: profileData.email,
-              password: '', // We don't store passwords
-              isAdmin: profileData.is_admin || false,
-              isApproved: profileData.is_approved || false,
-              createdAt: new Date(profileData.created_at)
-            };
-            
-            set({ currentUser: userData, isAuthenticated: true });
-            return true;
-          }
-          
-          return false;
-        } catch (error) {
-          console.error("Login error:", error);
-          return false;
+          set({ currentUser: user, isAuthenticated: true });
+          return true;
         }
+        
+        return false;
       },
       
-      logout: async () => {
-        // Sign out from Supabase
-        await supabase.auth.signOut();
+      logout: () => {
         set({ currentUser: null, isAuthenticated: false });
       },
       
       register: async (username, email, password) => {
-        // Note: The actual registration is now handled in Register.tsx
-        // This function now just maintains local state after registration
-        
         const { users, pendingUsers, syncPendingUsers } = get();
         
         syncPendingUsers();
@@ -196,51 +142,15 @@ export const useStore = create<AppState>()(
         return true;
       },
       
-      approveUser: async (userId) => {
+      approveUser: (userId) => {
         const { pendingUsers, users } = get();
         const userToApprove = pendingUsers.find((u) => u.id === userId);
         
         if (userToApprove) {
-          // Update user approval status in Supabase
-          if (userId.startsWith('pending_')) {
-            // This is a legacy user from localStorage, handle accordingly
-            const approvedUser = { ...userToApprove, isApproved: true };
-            
-            set({
-              users: [...users, approvedUser],
-              pendingUsers: pendingUsers.filter((u) => u.id !== userId),
-            });
-            
-            const existingPendingUsers = JSON.parse(localStorage.getItem(PENDING_USERS_KEY) || '[]');
-            localStorage.setItem(
-              PENDING_USERS_KEY, 
-              JSON.stringify(existingPendingUsers.filter((u: User) => u.id !== userId))
-            );
-          } else {
-            // This is a Supabase user, update the database
-            const { error } = await supabase
-              .from('profiles')
-              .update({ is_approved: true })
-              .eq('id', userId);
-            
-            if (error) {
-              console.error("Error approving user:", error);
-              return;
-            }
-            
-            set({
-              pendingUsers: pendingUsers.filter((u) => u.id !== userId),
-            });
-          }
-        }
-      },
-      
-      rejectUser: async (userId) => {
-        const { pendingUsers } = get();
-        
-        if (userId.startsWith('pending_')) {
-          // Legacy user, just remove from localStorage
+          const approvedUser = { ...userToApprove, isApproved: true };
+          
           set({
+            users: [...users, approvedUser],
             pendingUsers: pendingUsers.filter((u) => u.id !== userId),
           });
           
@@ -249,71 +159,39 @@ export const useStore = create<AppState>()(
             PENDING_USERS_KEY, 
             JSON.stringify(existingPendingUsers.filter((u: User) => u.id !== userId))
           );
-        } else {
-          // Supabase user, delete from profiles
-          const { error } = await supabase
-            .from('profiles')
-            .delete()
-            .eq('id', userId);
-          
-          if (error) {
-            console.error("Error rejecting user:", error);
-            return;
-          }
-          
-          set({
-            pendingUsers: pendingUsers.filter((u) => u.id !== userId),
-          });
         }
       },
       
-      syncPendingUsers: async () => {
+      rejectUser: (userId) => {
+        const { pendingUsers } = get();
+        
+        set({
+          pendingUsers: pendingUsers.filter((u) => u.id !== userId),
+        });
+        
+        const existingPendingUsers = JSON.parse(localStorage.getItem(PENDING_USERS_KEY) || '[]');
+        localStorage.setItem(
+          PENDING_USERS_KEY, 
+          JSON.stringify(existingPendingUsers.filter((u: User) => u.id !== userId))
+        );
+      },
+      
+      syncPendingUsers: () => {
         try {
-          // Get pending users from localStorage (legacy)
           const storedPendingUsers = JSON.parse(localStorage.getItem(PENDING_USERS_KEY) || '[]');
-          
-          // Get pending users from Supabase
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('is_approved', false);
-          
-          if (error) {
-            console.error("Error fetching pending users:", error);
-            set({ pendingUsers: storedPendingUsers });
-            return;
-          }
-          
-          console.log("Pending users from Supabase:", data);
-          
-          // Convert Supabase users to our User format
-          const supabasePendingUsers = data.map(profile => ({
-            id: profile.id,
-            username: profile.username,
-            email: profile.email,
-            password: '',
-            isAdmin: profile.is_admin || false,
-            isApproved: false,
-            createdAt: new Date(profile.created_at)
-          }));
-          
-          // Combine both sources
-          set({ pendingUsers: [...storedPendingUsers, ...supabasePendingUsers] });
+          set({ pendingUsers: storedPendingUsers });
         } catch (error) {
           console.error("Error syncing pending users:", error);
         }
       },
       
-      // Content Actions - Update to use Supabase
-      addPost: async (postData) => {
+      // Content Actions
+      addPost: (postData) => {
         const { posts, currentUser } = get();
         if (!currentUser) return;
         
-        // Generate a unique ID that will be used both locally and in Supabase
-        const newId = crypto.randomUUID();
-        
         const newPost: Post = {
-          id: newId,
+          id: Date.now().toString(),
           title: postData.title,
           content: postData.content,
           authorId: currentUser.id,
@@ -328,454 +206,128 @@ export const useStore = create<AppState>()(
           externalLinks: postData.externalLinks || [],
         };
         
-        // Store in Supabase first
-        try {
-          const { error } = await supabase
-            .from('posts')
-            .insert({
-              id: newId,
-              title: newPost.title,
-              content: newPost.content,
-              author_id: newPost.authorId,
-              is_public: newPost.isPublic,
-              parent_id: newPost.parentId,
-              code_snippet: newPost.codeSnippet,
-              image_url: newPost.imageUrl,
-              image_urls: newPost.imageUrls,
-              external_link: newPost.externalLink,
-              external_links: newPost.externalLinks
-            });
-          
-          if (error) {
-            console.error("Error adding post to Supabase:", error);
-            throw error;
-          }
-          
-          // Update local state for immediate UI feedback
-          set({ posts: [...posts, newPost] });
-          
-        } catch (error) {
-          console.error("Error in addPost:", error);
-          throw error;
-        }
+        set({ posts: [...posts, newPost] });
       },
       
-      deletePost: async (postId) => {
+      deletePost: (postId) => {
         const { posts } = get();
-        
-        // Delete from Supabase
-        try {
-          const { error } = await supabase
-            .from('posts')
-            .delete()
-            .eq('id', postId);
-          
-          if (error) {
-            console.error("Error deleting post from Supabase:", error);
-            throw error;
-          }
-          
-          // Also delete any replies
-          const { error: repliesError } = await supabase
-            .from('posts')
-            .delete()
-            .eq('parent_id', postId);
-          
-          if (repliesError) {
-            console.error("Error deleting replies from Supabase:", repliesError);
-          }
-          
-          // Update local state
-          set({
-            posts: posts.filter((post) => post.id !== postId && post.parentId !== postId),
-          });
-        } catch (error) {
-          console.error("Error in deletePost:", error);
-          throw error;
-        }
+        set({
+          posts: posts.filter((post) => post.id !== postId && post.parentId !== postId),
+        });
       },
       
-      addCategory: async (category: Omit<Category, 'id'>) => {
+      addCategory: (categoryData) => {
         const { categories } = get();
         
-        // Generate a unique ID
-        const newId = crypto.randomUUID();
-        
         const newCategory: Category = {
-          id: newId,
-          ...category,
+          id: Date.now().toString(),
+          ...categoryData,
         };
         
-        try {
-          // Store in Supabase
-          const { error } = await supabase
-            .from('categories')
-            .insert({
-              id: newId,
-              name: newCategory.name,
-              slug: newCategory.slug,
-              description: newCategory.description
-            });
-            
-          if (error) {
-            console.error("Error adding category to Supabase:", error);
-            throw error;
-          }
-          
-          // Update local state
-          set({ categories: [...categories, newCategory] });
-        } catch (error) {
-          console.error("Error in addCategory:", error);
-          throw error;
-        }
+        set({ categories: [...categories, newCategory] });
       },
       
-      addCodeSnippet: async (snippetData) => {
-        const { codeSnippets, currentUser } = get();
-        if (!currentUser) return;
-        
-        // Generate a unique ID
-        const newId = crypto.randomUUID();
+      addCodeSnippet: (snippetData) => {
+        const { codeSnippets } = get();
         
         const newSnippet: CodeSnippet = {
-          id: newId,
+          id: Date.now().toString(),
           ...snippetData,
           content: snippetData.code,
           createdAt: new Date(),
         };
         
-        // Store in Supabase
-        try {
-          const { error } = await supabase
-            .from('code_snippets')
-            .insert({
-              id: newId,
-              title: newSnippet.title,
-              description: newSnippet.description,
-              code: newSnippet.code,
-              content: newSnippet.content,
-              category_id: newSnippet.categoryId,
-              author_id: currentUser.id,
-              is_public: newSnippet.isPublic
-            });
-          
-          if (error) {
-            console.error("Error adding code snippet to Supabase:", error);
-            throw error;
-          }
-          
-          // Update local state
-          set({ codeSnippets: [...codeSnippets, newSnippet] });
-        } catch (error) {
-          console.error("Error in addCodeSnippet:", error);
-          throw error;
-        }
+        set({ codeSnippets: [...codeSnippets, newSnippet] });
       },
       
-      deleteCodeSnippet: async (snippetId) => {
+      deleteCodeSnippet: (snippetId) => {
         const { codeSnippets } = get();
-        
-        try {
-          // Delete from Supabase
-          const { error } = await supabase
-            .from('code_snippets')
-            .delete()
-            .eq('id', snippetId);
-            
-          if (error) {
-            console.error("Error deleting code snippet from Supabase:", error);
-            throw error;
-          }
-          
-          // Update local state
-          set({
-            codeSnippets: codeSnippets.filter((snippet) => snippet.id !== snippetId),
-          });
-        } catch (error) {
-          console.error("Error in deleteCodeSnippet:", error);
-          throw error;
-        }
+        set({
+          codeSnippets: codeSnippets.filter((snippet) => snippet.id !== snippetId),
+        });
       },
       
-      addWriteUp: async (writeUpData) => {
-        const { writeUps, currentUser } = get();
-        if (!currentUser) return;
-        
-        // Generate a unique ID
-        const newId = crypto.randomUUID();
+      addWriteUp: (writeUpData) => {
+        const { writeUps } = get();
         
         const newWriteUp: WriteUp = {
-          id: newId,
+          id: Date.now().toString(),
           ...writeUpData,
           url: writeUpData.link,
           createdAt: new Date(),
         };
         
-        // Store in Supabase
-        try {
-          const { error } = await supabase
-            .from('write_ups')
-            .insert({
-              id: newId,
-              title: newWriteUp.title,
-              description: newWriteUp.description || '',
-              url: newWriteUp.url,
-              link: newWriteUp.link,
-              category_id: newWriteUp.categoryId,
-              author_id: currentUser.id,
-              is_public: newWriteUp.isPublic
-            });
-          
-          if (error) {
-            console.error("Error adding write-up to Supabase:", error);
-            throw error;
-          }
-          
-          // Update local state
-          set({ writeUps: [...writeUps, newWriteUp] });
-        } catch (error) {
-          console.error("Error in addWriteUp:", error);
-          throw error;
-        }
+        set({ writeUps: [...writeUps, newWriteUp] });
       },
       
-      deleteWriteUp: async (writeUpId: string) => {
+      deleteWriteUp: (writeUpId) => {
         const { writeUps } = get();
-        
-        try {
-          // Delete from Supabase
-          const { error } = await supabase
-            .from('write_ups')
-            .delete()
-            .eq('id', writeUpId);
-            
-          if (error) {
-            console.error("Error deleting write-up from Supabase:", error);
-            throw error;
-          }
-          
-          // Update local state
-          set({
-            writeUps: writeUps.filter((writeUp) => writeUp.id !== writeUpId),
-          });
-        } catch (error) {
-          console.error("Error in deleteWriteUp:", error);
-          throw error;
-        }
+        set({
+          writeUps: writeUps.filter((writeUp) => writeUp.id !== writeUpId),
+        });
       },
       
-      addTestingTool: async (testingToolData) => {
-        const { testingTools, currentUser } = get();
-        if (!currentUser) return;
-        
-        // Generate a unique ID
-        const newId = crypto.randomUUID();
-        
-        const newTool: TestingTool = {
-          id: newId,
-          ...testingToolData,
-          content: testingToolData.code,
-          createdAt: new Date(),
-        };
-        
-        // Store in Supabase
-        try {
-          const { error } = await supabase
-            .from('testing_tools')
-            .insert({
-              id: newId,
-              title: newTool.title,
-              description: newTool.description || '',
-              code: newTool.code,
-              content: newTool.content,
-              category_id: newTool.categoryId,
-              author_id: currentUser.id,
-              is_public: newTool.isPublic
-            });
-          
-          if (error) {
-            console.error("Error adding testing tool to Supabase:", error);
-            throw error;
-          }
-          
-          // Update local state
-          set({ testingTools: [...testingTools, newTool] });
-        } catch (error) {
-          console.error("Error in addTestingTool:", error);
-          throw error;
-        }
-      },
-      
-      deleteTestingTool: async (toolId: string) => {
+      addTestingTool: (toolData) => {
         const { testingTools } = get();
         
-        try {
-          // Delete from Supabase
-          const { error } = await supabase
-            .from('testing_tools')
-            .delete()
-            .eq('id', toolId);
-            
-          if (error) {
-            console.error("Error deleting testing tool from Supabase:", error);
-            throw error;
-          }
-          
-          // Update local state
-          set({
-            testingTools: testingTools.filter((tool) => tool.id !== toolId),
-          });
-        } catch (error) {
-          console.error("Error in deleteTestingTool:", error);
-          throw error;
-        }
-      },
-      
-      addCTFComponent: async (ctfComponentData) => {
-        const { ctfComponents, currentUser } = get();
-        if (!currentUser) return;
-        
-        // Generate a unique ID
-        const newId = crypto.randomUUID();
-        
-        const newComponent: CTFComponent = {
-          id: newId,
-          ...ctfComponentData,
+        const newTool: TestingTool = {
+          id: Date.now().toString(),
+          ...toolData,
+          content: toolData.code,
           createdAt: new Date(),
         };
         
-        // Store in Supabase
-        try {
-          const { error } = await supabase
-            .from('ctf_components')
-            .insert({
-              id: newId,
-              title: newComponent.title,
-              type: newComponent.type,
-              content: newComponent.content,
-              author_id: currentUser.id,
-              is_public: newComponent.isPublic
-            });
-          
-          if (error) {
-            console.error("Error adding CTF component to Supabase:", error);
-            throw error;
-          }
-          
-          // Update local state
-          set({ ctfComponents: [...ctfComponents, newComponent] });
-        } catch (error) {
-          console.error("Error in addCTFComponent:", error);
-          throw error;
-        }
+        set({ testingTools: [...testingTools, newTool] });
       },
       
-      deleteCTFComponent: async (componentId: string) => {
+      deleteTestingTool: (toolId) => {
+        const { testingTools } = get();
+        set({
+          testingTools: testingTools.filter((tool) => tool.id !== toolId),
+        });
+      },
+      
+      addCTFComponent: (componentData) => {
         const { ctfComponents } = get();
         
-        try {
-          // Delete from Supabase
-          const { error } = await supabase
-            .from('ctf_components')
-            .delete()
-            .eq('id', componentId);
-            
-          if (error) {
-            console.error("Error deleting CTF component from Supabase:", error);
-            throw error;
-          }
-          
-          // Update local state
-          set({
-            ctfComponents: ctfComponents.filter((component) => component.id !== componentId),
-          });
-        } catch (error) {
-          console.error("Error in deleteCTFComponent:", error);
-          throw error;
-        }
+        const newComponent: CTFComponent = {
+          id: Date.now().toString(),
+          ...componentData,
+          createdAt: new Date(),
+        };
+        
+        set({ ctfComponents: [...ctfComponents, newComponent] });
       },
       
-      addYoutubeChannel: async (channelData) => {
-        const { youtubeChannels, currentUser } = get();
-        if (!currentUser) return;
-        
-        // Generate a unique ID
-        const newId = crypto.randomUUID();
+      deleteCTFComponent: (componentId) => {
+        const { ctfComponents } = get();
+        set({
+          ctfComponents: ctfComponents.filter((component) => component.id !== componentId),
+        });
+      },
+      
+      addYoutubeChannel: (channelData) => {
+        const { youtubeChannels } = get();
         
         const newChannel: YoutubeChannel = {
-          id: newId,
+          id: Date.now().toString(),
           ...channelData,
           createdAt: new Date(),
         };
         
-        // Store in Supabase
-        try {
-          const { error } = await supabase
-            .from('youtube_channels')
-            .insert({
-              id: newId,
-              name: newChannel.name,
-              url: newChannel.url,
-              description: newChannel.description || '',
-              thumbnail_url: newChannel.thumbnailUrl,
-              author_id: currentUser.id,
-              is_public: newChannel.isPublic
-            });
-          
-          if (error) {
-            console.error("Error adding YouTube channel to Supabase:", error);
-            throw error;
-          }
-          
-          // Update local state
-          set({ youtubeChannels: [...youtubeChannels, newChannel] });
-        } catch (error) {
-          console.error("Error in addYoutubeChannel:", error);
-          throw error;
-        }
+        set({ youtubeChannels: [...youtubeChannels, newChannel] });
       },
       
-      deleteYoutubeChannel: async (channelId: string) => {
+      deleteYoutubeChannel: (channelId) => {
         const { youtubeChannels } = get();
-        
-        // Delete from Supabase
-        try {
-          const { error } = await supabase
-            .from('youtube_channels')
-            .delete()
-            .eq('id', channelId);
-          
-          if (error) {
-            console.error("Error deleting YouTube channel from Supabase:", error);
-          }
-        } catch (error) {
-          console.error("Error in deleteYoutubeChannel:", error);
-        }
-        
-        // Update local state
         set({
           youtubeChannels: youtubeChannels.filter((channel) => channel.id !== channelId),
         });
       },
       
-      updatePostVisibility: async (postId: string, isPublic: boolean) => {
+      // Visibility Actions
+      updatePostVisibility: (postId, isPublic) => {
         const { posts } = get();
-        
-        // Update in Supabase
-        try {
-          const { error } = await supabase
-            .from('posts')
-            .update({ is_public: isPublic })
-            .eq('id', postId);
-          
-          if (error) {
-            console.error("Error updating post visibility in Supabase:", error);
-          }
-        } catch (error) {
-          console.error("Error in updatePostVisibility:", error);
-        }
-        
-        // Update local state
         set({
           posts: posts.map((post) =>
             post.id === postId ? { ...post, isPublic } : post
@@ -783,24 +335,8 @@ export const useStore = create<AppState>()(
         });
       },
       
-      updateCodeSnippetVisibility: async (snippetId: string, isPublic: boolean) => {
+      updateCodeSnippetVisibility: (snippetId, isPublic) => {
         const { codeSnippets } = get();
-        
-        // Update in Supabase
-        try {
-          const { error } = await supabase
-            .from('code_snippets')
-            .update({ is_public: isPublic })
-            .eq('id', snippetId);
-          
-          if (error) {
-            console.error("Error updating code snippet visibility in Supabase:", error);
-          }
-        } catch (error) {
-          console.error("Error in updateCodeSnippetVisibility:", error);
-        }
-        
-        // Update local state
         set({
           codeSnippets: codeSnippets.map((snippet) =>
             snippet.id === snippetId ? { ...snippet, isPublic } : snippet
@@ -808,24 +344,8 @@ export const useStore = create<AppState>()(
         });
       },
       
-      updateWriteUpVisibility: async (writeUpId: string, isPublic: boolean) => {
+      updateWriteUpVisibility: (writeUpId, isPublic) => {
         const { writeUps } = get();
-        
-        // Update in Supabase
-        try {
-          const { error } = await supabase
-            .from('write_ups')
-            .update({ is_public: isPublic })
-            .eq('id', writeUpId);
-          
-          if (error) {
-            console.error("Error updating write-up visibility in Supabase:", error);
-          }
-        } catch (error) {
-          console.error("Error in updateWriteUpVisibility:", error);
-        }
-        
-        // Update local state
         set({
           writeUps: writeUps.map((writeUp) =>
             writeUp.id === writeUpId ? { ...writeUp, isPublic } : writeUp
@@ -833,24 +353,8 @@ export const useStore = create<AppState>()(
         });
       },
       
-      updateTestingToolVisibility: async (toolId: string, isPublic: boolean) => {
+      updateTestingToolVisibility: (toolId, isPublic) => {
         const { testingTools } = get();
-        
-        // Update in Supabase
-        try {
-          const { error } = await supabase
-            .from('testing_tools')
-            .update({ is_public: isPublic })
-            .eq('id', toolId);
-          
-          if (error) {
-            console.error("Error updating testing tool visibility in Supabase:", error);
-          }
-        } catch (error) {
-          console.error("Error in updateTestingToolVisibility:", error);
-        }
-        
-        // Update local state
         set({
           testingTools: testingTools.map((tool) =>
             tool.id === toolId ? { ...tool, isPublic } : tool
@@ -858,24 +362,8 @@ export const useStore = create<AppState>()(
         });
       },
       
-      updateCTFComponentVisibility: async (componentId: string, isPublic: boolean) => {
+      updateCTFComponentVisibility: (componentId, isPublic) => {
         const { ctfComponents } = get();
-        
-        // Update in Supabase
-        try {
-          const { error } = await supabase
-            .from('ctf_components')
-            .update({ is_public: isPublic })
-            .eq('id', componentId);
-          
-          if (error) {
-            console.error("Error updating CTF component visibility in Supabase:", error);
-          }
-        } catch (error) {
-          console.error("Error in updateCTFComponentVisibility:", error);
-        }
-        
-        // Update local state
         set({
           ctfComponents: ctfComponents.map((component) =>
             component.id === componentId ? { ...component, isPublic } : component
@@ -883,24 +371,8 @@ export const useStore = create<AppState>()(
         });
       },
       
-      updateYoutubeChannelVisibility: async (channelId: string, isPublic: boolean) => {
+      updateYoutubeChannelVisibility: (channelId, isPublic) => {
         const { youtubeChannels } = get();
-        
-        // Update in Supabase
-        try {
-          const { error } = await supabase
-            .from('youtube_channels')
-            .update({ is_public: isPublic })
-            .eq('id', channelId);
-          
-          if (error) {
-            console.error("Error updating YouTube channel visibility in Supabase:", error);
-          }
-        } catch (error) {
-          console.error("Error in updateYoutubeChannelVisibility:", error);
-        }
-        
-        // Update local state
         set({
           youtubeChannels: youtubeChannels.map((channel) =>
             channel.id === channelId ? { ...channel, isPublic } : channel
@@ -913,7 +385,13 @@ export const useStore = create<AppState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         users: state.users,
-        // We don't persist database data anymore as we fetch it from Supabase
+        posts: state.posts,
+        categories: state.categories,
+        codeSnippets: state.codeSnippets,
+        writeUps: state.writeUps,
+        testingTools: state.testingTools,
+        ctfComponents: state.ctfComponents,
+        youtubeChannels: state.youtubeChannels,
       }),
     }
   )

@@ -1,6 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
-import { supabase } from '@/integrations/supabase/client';
 import {
   Users,
   FolderOpen,
@@ -14,6 +14,8 @@ import {
 import { toast } from 'sonner';
 import AddContentModal from '@/components/AddContentModal';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import AddYouTubeChannel from '@/components/AddYouTubeChannel';
+import AddCTFComponent from '@/components/AddCTFComponent';
 import AddCodeSnippet from '@/components/AddCodeSnippet';
 import AddTestingTool from '@/components/AddTestingTool';
 import { useNavigate } from 'react-router-dom';
@@ -37,44 +39,12 @@ const AdminPanel = () => {
     type: 'writeup',
     title: ''
   });
-  const [loading, setLoading] = useState(false);
-  const [dbPendingUsers, setDbPendingUsers] = useState<any[]>([]);
   
   const navigate = useNavigate();
 
   // Sync pending users when admin panel loads
   useEffect(() => {
     if (currentUser?.isAdmin) {
-      setLoading(true);
-      
-      // Fetch directly from Supabase for most up-to-date data
-      const fetchPendingUsers = async () => {
-        try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('is_approved', false);
-            
-          if (error) {
-            console.error("Error fetching pending users:", error);
-            toast.error("Error loading pending users");
-          } else {
-            console.log("Pending users from Supabase:", data);
-            if (data) {
-              setDbPendingUsers(data);
-            } else {
-              setDbPendingUsers([]);
-            }
-          }
-        } catch (err) {
-          console.error("Exception fetching pending users:", err);
-          toast.error("Error loading pending users");
-        } finally {
-          setLoading(false);
-        }
-      };
-      
-      fetchPendingUsers();
       syncPendingUsers();
     }
   }, [currentUser, syncPendingUsers]);
@@ -93,106 +63,14 @@ const AdminPanel = () => {
     );
   }
 
-  // Combine local pending users with those fetched directly from DB
-  const allPendingUsers = [...pendingUsers];
-  
-  // Add DB users that aren't already in the local state
-  if (dbPendingUsers && dbPendingUsers.length > 0) {
-    dbPendingUsers.forEach(dbUser => {
-      if (!allPendingUsers.some(localUser => localUser.id === dbUser.id)) {
-        allPendingUsers.push({
-          id: dbUser.id,
-          username: dbUser.username,
-          email: dbUser.email,
-          password: '',
-          isAdmin: dbUser.is_admin,
-          isApproved: false,
-          createdAt: new Date(dbUser.created_at)
-        });
-      }
-    });
-  }
-
-  const handleApproveUser = async (userId: string) => {
-    try {
-      setLoading(true);
-      
-      // First update in Supabase directly
-      if (!userId.startsWith('pending_')) {
-        const { error } = await supabase
-          .from('profiles')
-          .update({ is_approved: true })
-          .eq('id', userId);
-          
-        if (error) {
-          console.error("Error approving user in Supabase:", error);
-          toast.error("Failed to approve user");
-          setLoading(false);
-          return;
-        }
-      }
-      
-      // Then update local state via store function
-      await approveUser(userId);
-      toast.success('User approved');
-      
-      // Refresh the list
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('is_approved', false);
-        
-      if (!error && data) {
-        setDbPendingUsers(data);
-      }
-      
-      setLoading(false);
-    } catch (error) {
-      console.error("Error in handleApproveUser:", error);
-      toast.error("An error occurred while approving the user");
-      setLoading(false);
-    }
+  const handleApproveUser = (userId: string) => {
+    approveUser(userId);
+    toast.success('User approved');
   };
 
-  const handleRejectUser = async (userId: string) => {
-    try {
-      setLoading(true);
-      
-      // First update in Supabase directly if it's a Supabase user
-      if (!userId.startsWith('pending_')) {
-        const { error } = await supabase
-          .from('profiles')
-          .delete()
-          .eq('id', userId);
-          
-        if (error) {
-          console.error("Error rejecting user in Supabase:", error);
-          toast.error("Failed to reject user");
-          setLoading(false);
-          return;
-        }
-      }
-      
-      // Then update local state
-      rejectUser(userId);
-      toast.success('User rejected');
-      
-      // Refresh the list
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('is_approved', false);
-        
-      if (!error && data) {
-        setDbPendingUsers(data);
-      }
-      
-      setLoading(false);
-    } catch (error) {
-      console.error("Error in handleRejectUser:", error);
-      toast.error("An error occurred while rejecting the user");
-      setLoading(false);
-    }
+  const handleRejectUser = (userId: string) => {
+    rejectUser(userId);
+    toast.success('User rejected');
   };
 
   const openModal = (type: 'writeup' | 'youtube' | 'ctf' | 'code' | 'tool', title: string) => {
@@ -225,9 +103,9 @@ const AdminPanel = () => {
               >
                 <Users size={18} className="mr-3" />
                 <span>User Management</span>
-                {allPendingUsers.length > 0 && (
+                {pendingUsers.length > 0 && (
                   <span className="ml-auto bg-primary text-white text-xs py-0.5 px-2 rounded-full">
-                    {allPendingUsers.length}
+                    {pendingUsers.length}
                   </span>
                 )}
               </button>
@@ -251,11 +129,7 @@ const AdminPanel = () => {
               <div>
                 <h2 className="text-xl font-bold mb-4">User Approval Requests</h2>
                 
-                {loading ? (
-                  <div className="bg-card border border-border rounded-lg p-6 text-center">
-                    <p className="text-muted-foreground">Loading pending users...</p>
-                  </div>
-                ) : allPendingUsers.length === 0 ? (
+                {pendingUsers.length === 0 ? (
                   <div className="bg-card border border-border rounded-lg p-6 text-center">
                     <p className="text-muted-foreground">No pending approval requests</p>
                   </div>
@@ -271,7 +145,7 @@ const AdminPanel = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {allPendingUsers.map((user) => (
+                        {pendingUsers.map((user) => (
                           <tr key={user.id} className="border-b border-border">
                             <td className="py-3 px-4">{user.username}</td>
                             <td className="py-3 px-4">{user.email}</td>
@@ -283,16 +157,14 @@ const AdminPanel = () => {
                                 <button
                                   onClick={() => handleApproveUser(user.id)}
                                   className="bg-green-900/30 hover:bg-green-900/50 text-green-400 px-3 py-1 rounded text-sm"
-                                  disabled={loading}
                                 >
-                                  {loading ? 'Processing...' : 'Approve'}
+                                  Approve
                                 </button>
                                 <button
                                   onClick={() => handleRejectUser(user.id)}
                                   className="bg-primary/30 hover:bg-primary/40 text-primary px-3 py-1 rounded text-sm"
-                                  disabled={loading}
                                 >
-                                  {loading ? 'Processing...' : 'Reject'}
+                                  Reject
                                 </button>
                               </div>
                             </td>
