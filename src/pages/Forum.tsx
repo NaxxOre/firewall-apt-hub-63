@@ -70,29 +70,25 @@ const Forum = () => {
   // Get reply counts for all posts at once
   const fetchReplyCounts = async (postIds: string[]) => {
     try {
-      const { data, error } = await supabase
-        .from('posts')
-        .select('parent_id, count')
-        .in('parent_id', postIds)
-        .count();
-      
-      if (error) {
-        console.error("Error fetching reply counts:", error);
-        return;
-      }
-      
-      // Group by parent_id and count
+      // For each post ID, we need to count the number of replies
       const counts: Record<string, number> = {};
       
-      for (const postId of postIds) {
-        // Find count from data or default to count from local posts
-        const dataItem = data.find(item => item.parent_id === postId);
-        if (dataItem) {
-          counts[postId] = parseInt(dataItem.count, 10);
-        } else {
-          counts[postId] = localPosts.filter(post => post.parentId === postId).length;
-        }
-      }
+      // Using Promise.all to fetch counts for all posts in parallel
+      await Promise.all(
+        postIds.map(async (postId) => {
+          const { data, error, count } = await supabase
+            .from('posts')
+            .select('id', { count: 'exact' })
+            .eq('parent_id', postId);
+          
+          if (error) {
+            console.error(`Error fetching reply count for post ${postId}:`, error);
+            counts[postId] = localPosts.filter(post => post.parentId === postId).length;
+          } else {
+            counts[postId] = count || 0;
+          }
+        })
+      );
       
       setReplyCounts(counts);
     } catch (error) {
