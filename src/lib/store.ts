@@ -11,6 +11,7 @@ import {
   YoutubeChannel
 } from '../types';
 import { CATEGORIES, initialUsers, ADMIN_USER } from './constants';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AppState {
   // Auth
@@ -88,29 +89,81 @@ export const useStore = create<AppState>()(
       
       // Authentication Actions
       login: async (email, password) => {
-        const { users } = get();
-        const user = users.find(
-          (u) => u.email === email && u.password === password
-        );
-        
-        if (user) {
-          if (!user.isApproved && !user.isAdmin) {
-            console.log("User not approved yet");
+        try {
+          // First try Supabase authentication
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password
+          });
+          
+          if (error) {
+            console.error("Supabase login error:", error);
+            // Fallback to local authentication
+            const { users } = get();
+            const user = users.find(u => u.email === email && u.password === password);
+            
+            if (user) {
+              if (!user.isApproved && !user.isAdmin) {
+                console.log("User not approved yet");
+                return false;
+              }
+              
+              set({ currentUser: user, isAuthenticated: true });
+              return true;
+            }
+            
             return false;
           }
           
-          set({ currentUser: user, isAuthenticated: true });
-          return true;
+          if (data.user) {
+            // Get user profile from profiles table
+            const { data: profileData, error: profileError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', data.user.id)
+              .single();
+            
+            if (profileError) {
+              console.error("Error fetching profile:", profileError);
+              return false;
+            }
+            
+            if (!profileData.is_approved && !profileData.is_admin) {
+              console.log("User not approved yet");
+              return false;
+            }
+            
+            const userData: User = {
+              id: data.user.id,
+              username: profileData.username,
+              email: profileData.email,
+              password: '', // We don't store passwords
+              isAdmin: profileData.is_admin || false,
+              isApproved: profileData.is_approved || false,
+              createdAt: new Date(profileData.created_at)
+            };
+            
+            set({ currentUser: userData, isAuthenticated: true });
+            return true;
+          }
+          
+          return false;
+        } catch (error) {
+          console.error("Login error:", error);
+          return false;
         }
-        
-        return false;
       },
       
-      logout: () => {
+      logout: async () => {
+        // Sign out from Supabase
+        await supabase.auth.signOut();
         set({ currentUser: null, isAuthenticated: false });
       },
       
       register: async (username, email, password) => {
+        // Note: The actual registration is now handled in Register.tsx
+        // This function now just maintains local state after registration
+        
         const { users, pendingUsers, syncPendingUsers } = get();
         
         syncPendingUsers();
@@ -142,15 +195,51 @@ export const useStore = create<AppState>()(
         return true;
       },
       
-      approveUser: (userId) => {
+      approveUser: async (userId) => {
         const { pendingUsers, users } = get();
         const userToApprove = pendingUsers.find((u) => u.id === userId);
         
         if (userToApprove) {
-          const approvedUser = { ...userToApprove, isApproved: true };
-          
+          // Update user approval status in Supabase
+          if (userId.startsWith('pending_')) {
+            // This is a legacy user from localStorage, handle accordingly
+            const approvedUser = { ...userToApprove, isApproved: true };
+            
+            set({
+              users: [...users, approvedUser],
+              pendingUsers: pendingUsers.filter((u) => u.id !== userId),
+            });
+            
+            const existingPendingUsers = JSON.parse(localStorage.getItem(PENDING_USERS_KEY) || '[]');
+            localStorage.setItem(
+              PENDING_USERS_KEY, 
+              JSON.stringify(existingPendingUsers.filter((u: User) => u.id !== userId))
+            );
+          } else {
+            // This is a Supabase user, update the database
+            const { error } = await supabase
+              .from('profiles')
+              .update({ is_approved: true })
+              .eq('id', userId);
+            
+            if (error) {
+              console.error("Error approving user:", error);
+              return;
+            }
+            
+            set({
+              pendingUsers: pendingUsers.filter((u) => u.id !== userId),
+            });
+          }
+        }
+      },
+      
+      rejectUser: async (userId) => {
+        const { pendingUsers } = get();
+        
+        if (userId.startsWith('pending_')) {
+          // Legacy user, just remove from localStorage
           set({
-            users: [...users, approvedUser],
             pendingUsers: pendingUsers.filter((u) => u.id !== userId),
           });
           
@@ -159,34 +248,61 @@ export const useStore = create<AppState>()(
             PENDING_USERS_KEY, 
             JSON.stringify(existingPendingUsers.filter((u: User) => u.id !== userId))
           );
+        } else {
+          // Supabase user, delete from profiles
+          const { error } = await supabase
+            .from('profiles')
+            .delete()
+            .eq('id', userId);
+          
+          if (error) {
+            console.error("Error rejecting user:", error);
+            return;
+          }
+          
+          set({
+            pendingUsers: pendingUsers.filter((u) => u.id !== userId),
+          });
         }
       },
       
-      rejectUser: (userId) => {
-        const { pendingUsers } = get();
-        
-        set({
-          pendingUsers: pendingUsers.filter((u) => u.id !== userId),
-        });
-        
-        const existingPendingUsers = JSON.parse(localStorage.getItem(PENDING_USERS_KEY) || '[]');
-        localStorage.setItem(
-          PENDING_USERS_KEY, 
-          JSON.stringify(existingPendingUsers.filter((u: User) => u.id !== userId))
-        );
-      },
-      
-      syncPendingUsers: () => {
+      syncPendingUsers: async () => {
         try {
+          // Get pending users from localStorage (legacy)
           const storedPendingUsers = JSON.parse(localStorage.getItem(PENDING_USERS_KEY) || '[]');
-          set({ pendingUsers: storedPendingUsers });
+          
+          // Get pending users from Supabase
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('is_approved', false);
+          
+          if (error) {
+            console.error("Error fetching pending users:", error);
+            set({ pendingUsers: storedPendingUsers });
+            return;
+          }
+          
+          // Convert Supabase users to our User format
+          const supabasePendingUsers = data.map(profile => ({
+            id: profile.id,
+            username: profile.username,
+            email: profile.email,
+            password: '',
+            isAdmin: profile.is_admin || false,
+            isApproved: false,
+            createdAt: new Date(profile.created_at)
+          }));
+          
+          // Combine both sources
+          set({ pendingUsers: [...storedPendingUsers, ...supabasePendingUsers] });
         } catch (error) {
           console.error("Error syncing pending users:", error);
         }
       },
       
-      // Content Actions
-      addPost: (postData) => {
+      // Content Actions - Update to use Supabase
+      addPost: async (postData) => {
         const { posts, currentUser } = get();
         if (!currentUser) return;
         
@@ -206,29 +322,82 @@ export const useStore = create<AppState>()(
           externalLinks: postData.externalLinks || [],
         };
         
+        // Store in Supabase first
+        try {
+          const { error } = await supabase
+            .from('posts')
+            .insert({
+              id: newPost.id,
+              title: newPost.title,
+              content: newPost.content,
+              author_id: newPost.authorId,
+              is_public: newPost.isPublic,
+              parent_id: newPost.parentId,
+              code_snippet: newPost.codeSnippet,
+              image_url: newPost.imageUrl,
+              image_urls: newPost.imageUrls,
+              external_link: newPost.externalLink,
+              external_links: newPost.externalLinks
+            });
+          
+          if (error) {
+            console.error("Error adding post to Supabase:", error);
+          }
+        } catch (error) {
+          console.error("Error in addPost:", error);
+        }
+        
+        // Update local state for immediate UI feedback
         set({ posts: [...posts, newPost] });
       },
       
-      deletePost: (postId) => {
+      deletePost: async (postId) => {
         const { posts } = get();
+        
+        // Delete from Supabase
+        try {
+          const { error } = await supabase
+            .from('posts')
+            .delete()
+            .eq('id', postId);
+          
+          if (error) {
+            console.error("Error deleting post from Supabase:", error);
+          }
+          
+          // Also delete any replies
+          const { error: repliesError } = await supabase
+            .from('posts')
+            .delete()
+            .eq('parent_id', postId);
+          
+          if (repliesError) {
+            console.error("Error deleting replies from Supabase:", repliesError);
+          }
+        } catch (error) {
+          console.error("Error in deletePost:", error);
+        }
+        
+        // Update local state
         set({
           posts: posts.filter((post) => post.id !== postId && post.parentId !== postId),
         });
       },
       
-      addCategory: (categoryData) => {
+      addCategory: (category: Omit<Category, 'id'>) => {
         const { categories } = get();
         
         const newCategory: Category = {
           id: Date.now().toString(),
-          ...categoryData,
+          ...category,
         };
         
         set({ categories: [...categories, newCategory] });
       },
       
-      addCodeSnippet: (snippetData) => {
-        const { codeSnippets } = get();
+      addCodeSnippet: async (snippetData) => {
+        const { codeSnippets, currentUser } = get();
+        if (!currentUser) return;
         
         const newSnippet: CodeSnippet = {
           id: Date.now().toString(),
@@ -237,6 +406,29 @@ export const useStore = create<AppState>()(
           createdAt: new Date(),
         };
         
+        // Store in Supabase
+        try {
+          const { error } = await supabase
+            .from('code_snippets')
+            .insert({
+              id: newSnippet.id,
+              title: newSnippet.title,
+              description: newSnippet.description,
+              code: newSnippet.code,
+              content: newSnippet.content,
+              category_id: newSnippet.categoryId,
+              author_id: currentUser.id,
+              is_public: newSnippet.isPublic
+            });
+          
+          if (error) {
+            console.error("Error adding code snippet to Supabase:", error);
+          }
+        } catch (error) {
+          console.error("Error in addCodeSnippet:", error);
+        }
+        
+        // Update local state
         set({ codeSnippets: [...codeSnippets, newSnippet] });
       },
       
@@ -247,87 +439,103 @@ export const useStore = create<AppState>()(
         });
       },
       
-      addWriteUp: (writeUpData) => {
+      addWriteUp: (writeUp: Omit<WriteUp, 'id' | 'createdAt'>) => {
         const { writeUps } = get();
         
         const newWriteUp: WriteUp = {
           id: Date.now().toString(),
-          ...writeUpData,
-          url: writeUpData.link,
+          ...writeUp,
+          url: writeUp.link,
           createdAt: new Date(),
         };
         
         set({ writeUps: [...writeUps, newWriteUp] });
       },
       
-      deleteWriteUp: (writeUpId) => {
+      deleteWriteUp: (writeUpId: string) => {
         const { writeUps } = get();
         set({
           writeUps: writeUps.filter((writeUp) => writeUp.id !== writeUpId),
         });
       },
       
-      addTestingTool: (toolData) => {
+      addTestingTool: (testingTool: Omit<TestingTool, 'id' | 'createdAt'>) => {
         const { testingTools } = get();
         
         const newTool: TestingTool = {
           id: Date.now().toString(),
-          ...toolData,
-          content: toolData.code,
+          ...testingTool,
+          content: testingTool.code,
           createdAt: new Date(),
         };
         
         set({ testingTools: [...testingTools, newTool] });
       },
       
-      deleteTestingTool: (toolId) => {
+      deleteTestingTool: (toolId: string) => {
         const { testingTools } = get();
         set({
           testingTools: testingTools.filter((tool) => tool.id !== toolId),
         });
       },
       
-      addCTFComponent: (componentData) => {
+      addCTFComponent: (ctfComponent: Omit<CTFComponent, 'id' | 'createdAt'>) => {
         const { ctfComponents } = get();
         
         const newComponent: CTFComponent = {
           id: Date.now().toString(),
-          ...componentData,
+          ...ctfComponent,
           createdAt: new Date(),
         };
         
         set({ ctfComponents: [...ctfComponents, newComponent] });
       },
       
-      deleteCTFComponent: (componentId) => {
+      deleteCTFComponent: (componentId: string) => {
         const { ctfComponents } = get();
         set({
           ctfComponents: ctfComponents.filter((component) => component.id !== componentId),
         });
       },
       
-      addYoutubeChannel: (channelData) => {
+      addYoutubeChannel: (channel: Omit<YoutubeChannel, 'id' | 'createdAt'>) => {
         const { youtubeChannels } = get();
         
         const newChannel: YoutubeChannel = {
           id: Date.now().toString(),
-          ...channelData,
+          ...channel,
           createdAt: new Date(),
         };
         
         set({ youtubeChannels: [...youtubeChannels, newChannel] });
       },
       
-      deleteYoutubeChannel: (channelId) => {
+      deleteYoutubeChannel: (channelId: string) => {
         const { youtubeChannels } = get();
         set({
           youtubeChannels: youtubeChannels.filter((channel) => channel.id !== channelId),
         });
       },
       
-      // Visibility Actions
-      updatePostVisibility: (postId, isPublic) => {
+      // Updates for visibility toggles
+      updatePostVisibility: async (postId, isPublic) => {
         const { posts } = get();
+        
+        // Update in Supabase
+        try {
+          const { error } = await supabase
+            .from('posts')
+            .update({ is_public: isPublic })
+            .eq('id', postId);
+          
+          if (error) {
+            console.error("Error updating post visibility in Supabase:", error);
+          }
+        } catch (error) {
+          console.error("Error in updatePostVisibility:", error);
+        }
+        
+        // Update local state
         set({
           posts: posts.map((post) =>
             post.id === postId ? { ...post, isPublic } : post

@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useStore } from '@/lib/store';
+import { supabase } from '@/integrations/supabase/client';
 import RegistrationAnimation from '@/components/animations/RegistrationAnimation';
 import { toast } from 'sonner';
 
@@ -26,21 +27,46 @@ const Register = () => {
     setLoading(true);
     
     try {
-      const success = await register(username, email, password);
+      // First, create the user in Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username,
+          }
+        }
+      });
       
-      if (success) {
+      if (authError) throw authError;
+      
+      if (authData?.user) {
+        // Then create a profile in our profiles table
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authData.user.id,
+            username,
+            email,
+            is_admin: false,
+            is_approved: false,
+          });
+        
+        if (profileError) throw profileError;
+        
+        // Update local store for immediate UI feedback
+        register(username, email, password);
+        
         setShowAnimation(true);
         toast.success('Registration successful! Waiting for admin approval');
         
         setTimeout(() => {
           navigate('/login');
         }, 3000);
-      } else {
-        toast.error('Username or email already exists');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration error:', error);
-      toast.error('An error occurred during registration');
+      toast.error(error.message || 'An error occurred during registration');
     } finally {
       setLoading(false);
     }

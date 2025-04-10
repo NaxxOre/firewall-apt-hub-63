@@ -1,6 +1,6 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
+import { supabase } from '@/integrations/supabase/client';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Calendar, User, MessageSquare, ExternalLink, Code, Image } from 'lucide-react';
@@ -8,15 +8,79 @@ import ContentActions from '@/components/ContentActions';
 import { cn } from '@/lib/utils';
 
 const Forum = () => {
-  const { posts, currentUser } = useStore();
+  const { posts: localPosts, currentUser } = useStore();
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   
-  // Only show top-level posts (not replies)
-  const topLevelPosts = posts.filter(post => !post.parentId);
+  useEffect(() => {
+    const fetchPosts = async () => {
+      setLoading(true);
+      try {
+        // First try to fetch from Supabase
+        const { data, error } = await supabase
+          .from('posts')
+          .select('*')
+          .filter('parent_id', 'is', null)
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          console.error("Error fetching posts from Supabase:", error);
+          // Fallback to local posts
+          setPosts(localPosts.filter(post => !post.parentId));
+        } else if (data && data.length > 0) {
+          // Map Supabase data to our Post format
+          const formattedPosts = data.map(post => ({
+            id: post.id,
+            title: post.title,
+            content: post.content,
+            authorId: post.author_id,
+            authorName: post.author_name || 'Unknown', // We might need to fetch author names separately
+            isPublic: post.is_public,
+            createdAt: new Date(post.created_at),
+            parentId: post.parent_id,
+            codeSnippet: post.code_snippet,
+            imageUrl: post.image_url,
+            imageUrls: post.image_urls || [],
+            externalLink: post.external_link,
+            externalLinks: post.external_links || []
+          }));
+          
+          setPosts(formattedPosts);
+        } else {
+          // If no posts in Supabase, use local posts
+          setPosts(localPosts.filter(post => !post.parentId));
+        }
+      } catch (error) {
+        console.error("Error in fetchPosts:", error);
+        setPosts(localPosts.filter(post => !post.parentId));
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchPosts();
+  }, [localPosts]);
   
   // Get reply counts for each post
-  const getReplyCount = (postId: string) => {
-    return posts.filter(post => post.parentId === postId).length;
+  const getReplyCount = async (postId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('id')
+        .eq('parent_id', postId);
+      
+      if (error) {
+        console.error("Error fetching reply count:", error);
+        // Fallback to local posts
+        return localPosts.filter(post => post.parentId === postId).length;
+      }
+      
+      return data.length;
+    } catch (error) {
+      console.error("Error in getReplyCount:", error);
+      return localPosts.filter(post => post.parentId === postId).length;
+    }
   };
 
   return (
@@ -31,7 +95,11 @@ const Forum = () => {
         )}
       </div>
       
-      {topLevelPosts.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-10">
+          <p>Loading posts...</p>
+        </div>
+      ) : posts.length === 0 ? (
         <div className="bg-card border border-border rounded-lg p-6 text-center">
           <p className="text-muted-foreground mb-4">No posts yet. Be the first to create a post!</p>
           
@@ -55,7 +123,7 @@ const Forum = () => {
         </div>
       ) : (
         <div className="space-y-4">
-          {topLevelPosts.map((post) => (
+          {posts.map((post) => (
             <div key={post.id} className={cn(
               "bg-card border border-border rounded-lg p-6",
               !post.isPublic && "opacity-70"

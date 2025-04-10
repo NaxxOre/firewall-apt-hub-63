@@ -1,6 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Users,
   FolderOpen,
@@ -14,8 +14,6 @@ import {
 import { toast } from 'sonner';
 import AddContentModal from '@/components/AddContentModal';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import AddYouTubeChannel from '@/components/AddYouTubeChannel';
-import AddCTFComponent from '@/components/AddCTFComponent';
 import AddCodeSnippet from '@/components/AddCodeSnippet';
 import AddTestingTool from '@/components/AddTestingTool';
 import { useNavigate } from 'react-router-dom';
@@ -46,6 +44,23 @@ const AdminPanel = () => {
   useEffect(() => {
     if (currentUser?.isAdmin) {
       syncPendingUsers();
+      
+      // Also fetch directly from Supabase for most up-to-date data
+      const fetchPendingUsers = async () => {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('is_approved', false);
+          
+        if (error) {
+          console.error("Error fetching pending users:", error);
+          return;
+        }
+        
+        console.log("Pending users from Supabase:", data);
+      };
+      
+      fetchPendingUsers();
     }
   }, [currentUser, syncPendingUsers]);
 

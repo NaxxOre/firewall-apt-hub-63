@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import { Link } from 'react-router-dom';
@@ -15,17 +14,41 @@ const Terminal = () => {
     // Fetch recent posts from Supabase
     const fetchRecentPosts = async () => {
       try {
-        // Use the store to get recent posts instead of directly querying Supabase
-        // This avoids the TypeScript error with the Supabase client
-        const { posts } = useStore.getState();
+        // First try to get posts from Supabase
+        const { data, error } = await supabase
+          .from('posts')
+          .select('id, title, author_id, created_at, is_public')
+          .filter('parent_id', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(3);
         
-        // Take the 3 most recent posts
-        const recentPostsData = posts
-          .filter(post => !post.parentId && (post.isPublic || (currentUser && post.authorId === currentUser.id)))
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-          .slice(0, 3);
+        if (error) {
+          console.error('Error fetching posts from Supabase:', error);
+          // Fallback to local store if Supabase fetch fails
+          const { posts } = useStore.getState();
+          
+          const recentPostsData = posts
+            .filter(post => !post.parentId && (post.isPublic || (currentUser && post.authorId === currentUser.id)))
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .slice(0, 3);
+          
+          setRecentPosts(recentPostsData);
+          return;
+        }
         
-        setRecentPosts(recentPostsData);
+        if (data && data.length > 0) {
+          setRecentPosts(data);
+        } else {
+          // Fallback to local store if no posts found in Supabase
+          const { posts } = useStore.getState();
+          
+          const recentPostsData = posts
+            .filter(post => !post.parentId && (post.isPublic || (currentUser && post.authorId === currentUser.id)))
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .slice(0, 3);
+          
+          setRecentPosts(recentPostsData);
+        }
       } catch (error) {
         console.error('Error in fetchRecentPosts:', error);
       }
