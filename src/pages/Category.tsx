@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStore } from '@/lib/store';
+import { supabase } from '@/integrations/supabase/client';
 import { CATEGORIES, CATEGORY_SECTIONS } from '@/lib/constants';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,10 +15,11 @@ import CodeSnippetDisplay from '@/components/CodeSnippetDisplay';
 import TestingToolDisplay from '@/components/TestingToolDisplay';
 import ContentCard from '@/components/ContentCard';
 import ContentActions from '@/components/ContentActions';
+import { toast } from 'sonner';
 
 const Category = () => {
   const { categoryId = '', sectionId = 'codes' } = useParams<{ categoryId: string; sectionId: string }>();
-  const { codeSnippets, writeUps, testingTools, isAuthenticated, currentUser } = useStore();
+  const { codeSnippets, writeUps, testingTools, isAuthenticated, currentUser, categories } = useStore();
   const [modalOpen, setModalOpen] = useState<{
     isOpen: boolean,
     type: 'code' | 'tool' | 'writeup',
@@ -27,9 +30,101 @@ const Category = () => {
     title: ''
   });
   
+  const [loading, setLoading] = useState(true);
+  const [localCodeSnippets, setLocalCodeSnippets] = useState(codeSnippets);
+  const [localWriteUps, setLocalWriteUps] = useState(writeUps);
+  const [localTestingTools, setLocalTestingTools] = useState(testingTools);
+  
   const navigate = useNavigate();
   
   const category = CATEGORIES.find((cat) => cat.slug === categoryId);
+  
+  // Fetch data from Supabase when component mounts
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      
+      try {
+        // Fetch code snippets
+        const { data: snippetData, error: snippetError } = await supabase
+          .from('code_snippets')
+          .select('*')
+          .eq('category_id', category?.id);
+          
+        if (snippetError) {
+          console.error("Error fetching code snippets:", snippetError);
+          toast.error("Error loading code snippets");
+        } else if (snippetData) {
+          const snippets = snippetData.map(item => ({
+            id: item.id,
+            title: item.title,
+            categoryId: item.category_id,
+            code: item.code,
+            content: item.content,
+            description: item.description,
+            isPublic: item.is_public,
+            createdAt: new Date(item.created_at)
+          }));
+          setLocalCodeSnippets(snippets);
+        }
+        
+        // Fetch write-ups
+        const { data: writeupData, error: writeupError } = await supabase
+          .from('write_ups')
+          .select('*')
+          .eq('category_id', category?.id);
+          
+        if (writeupError) {
+          console.error("Error fetching write-ups:", writeupError);
+          toast.error("Error loading write-ups");
+        } else if (writeupData) {
+          const writeups = writeupData.map(item => ({
+            id: item.id,
+            title: item.title,
+            categoryId: item.category_id,
+            url: item.url,
+            link: item.link,
+            description: item.description,
+            isPublic: item.is_public,
+            createdAt: new Date(item.created_at)
+          }));
+          setLocalWriteUps(writeups);
+        }
+        
+        // Fetch testing tools
+        const { data: toolData, error: toolError } = await supabase
+          .from('testing_tools')
+          .select('*')
+          .eq('category_id', category?.id);
+          
+        if (toolError) {
+          console.error("Error fetching testing tools:", toolError);
+          toast.error("Error loading testing tools");
+        } else if (toolData) {
+          const tools = toolData.map(item => ({
+            id: item.id,
+            title: item.title,
+            categoryId: item.category_id,
+            code: item.code,
+            content: item.content,
+            description: item.description,
+            isPublic: item.is_public,
+            createdAt: new Date(item.created_at)
+          }));
+          setLocalTestingTools(tools);
+        }
+      } catch (error) {
+        console.error("Error fetching category data:", error);
+        toast.error("Error loading category data");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (category) {
+      fetchData();
+    }
+  }, [category, categoryId]);
   
   if (!category) {
     console.error(`Category not found for slug: ${categoryId}`);
@@ -42,15 +137,15 @@ const Category = () => {
     );
   }
   
-  const filteredCodeSnippets = codeSnippets.filter(
+  const filteredCodeSnippets = localCodeSnippets.filter(
     (snippet) => snippet.categoryId === category.id && (snippet.isPublic || currentUser?.isAdmin)
   );
   
-  const filteredWriteUps = writeUps.filter(
+  const filteredWriteUps = localWriteUps.filter(
     (writeUp) => writeUp.categoryId === category.id && (writeUp.isPublic || currentUser?.isAdmin)
   );
   
-  const filteredTestingTools = testingTools.filter(
+  const filteredTestingTools = localTestingTools.filter(
     (tool) => tool.categoryId === category.id && (tool.isPublic || currentUser?.isAdmin)
   );
   

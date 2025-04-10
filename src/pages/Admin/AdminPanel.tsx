@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import { supabase } from '@/integrations/supabase/client';
@@ -46,28 +47,32 @@ const AdminPanel = () => {
   useEffect(() => {
     if (currentUser?.isAdmin) {
       setLoading(true);
-      syncPendingUsers();
       
-      // Also fetch directly from Supabase for most up-to-date data
+      // Fetch directly from Supabase for most up-to-date data
       const fetchPendingUsers = async () => {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('is_approved', false);
-          
-        if (error) {
-          console.error("Error fetching pending users:", error);
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('is_approved', false);
+            
+          if (error) {
+            console.error("Error fetching pending users:", error);
+            toast.error("Error loading pending users");
+          } else {
+            console.log("Pending users from Supabase:", data);
+            setDbPendingUsers(data || []);
+          }
+        } catch (err) {
+          console.error("Exception fetching pending users:", err);
           toast.error("Error loading pending users");
+        } finally {
           setLoading(false);
-          return;
         }
-        
-        console.log("Pending users from Supabase:", data);
-        setDbPendingUsers(data || []);
-        setLoading(false);
       };
       
       fetchPendingUsers();
+      syncPendingUsers();
     }
   }, [currentUser, syncPendingUsers]);
 

@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { 
@@ -308,8 +309,11 @@ export const useStore = create<AppState>()(
         const { posts, currentUser } = get();
         if (!currentUser) return;
         
+        // Generate a unique ID that will be used both locally and in Supabase
+        const newId = crypto.randomUUID();
+        
         const newPost: Post = {
-          id: Date.now().toString(),
+          id: newId,
           title: postData.title,
           content: postData.content,
           authorId: currentUser.id,
@@ -329,7 +333,7 @@ export const useStore = create<AppState>()(
           const { error } = await supabase
             .from('posts')
             .insert({
-              id: newPost.id,
+              id: newId,
               title: newPost.title,
               content: newPost.content,
               author_id: newPost.authorId,
@@ -346,12 +350,14 @@ export const useStore = create<AppState>()(
             console.error("Error adding post to Supabase:", error);
             throw error;
           }
+          
+          // Update local state for immediate UI feedback
+          set({ posts: [...posts, newPost] });
+          
         } catch (error) {
           console.error("Error in addPost:", error);
+          throw error;
         }
-        
-        // Update local state for immediate UI feedback
-        set({ posts: [...posts, newPost] });
       },
       
       deletePost: async (postId) => {
@@ -366,6 +372,7 @@ export const useStore = create<AppState>()(
           
           if (error) {
             console.error("Error deleting post from Supabase:", error);
+            throw error;
           }
           
           // Also delete any replies
@@ -377,33 +384,61 @@ export const useStore = create<AppState>()(
           if (repliesError) {
             console.error("Error deleting replies from Supabase:", repliesError);
           }
+          
+          // Update local state
+          set({
+            posts: posts.filter((post) => post.id !== postId && post.parentId !== postId),
+          });
         } catch (error) {
           console.error("Error in deletePost:", error);
+          throw error;
         }
-        
-        // Update local state
-        set({
-          posts: posts.filter((post) => post.id !== postId && post.parentId !== postId),
-        });
       },
       
-      addCategory: (category: Omit<Category, 'id'>) => {
+      addCategory: async (category: Omit<Category, 'id'>) => {
         const { categories } = get();
         
+        // Generate a unique ID
+        const newId = crypto.randomUUID();
+        
         const newCategory: Category = {
-          id: Date.now().toString(),
+          id: newId,
           ...category,
         };
         
-        set({ categories: [...categories, newCategory] });
+        try {
+          // Store in Supabase
+          const { error } = await supabase
+            .from('categories')
+            .insert({
+              id: newId,
+              name: newCategory.name,
+              slug: newCategory.slug,
+              description: newCategory.description
+            });
+            
+          if (error) {
+            console.error("Error adding category to Supabase:", error);
+            throw error;
+          }
+          
+          // Update local state
+          set({ categories: [...categories, newCategory] });
+        } catch (error) {
+          console.error("Error in addCategory:", error);
+          throw error;
+        }
       },
       
       addCodeSnippet: async (snippetData) => {
         const { codeSnippets, currentUser } = get();
         if (!currentUser) return;
         
+        // Generate a unique ID
+        const newId = crypto.randomUUID();
+        
         const newSnippet: CodeSnippet = {
-          id: Date.now().toString(),
+          id: newId,
           ...snippetData,
           content: snippetData.code,
           createdAt: new Date(),
@@ -414,7 +449,7 @@ export const useStore = create<AppState>()(
           const { error } = await supabase
             .from('code_snippets')
             .insert({
-              id: newSnippet.id,
+              id: newId,
               title: newSnippet.title,
               description: newSnippet.description,
               code: newSnippet.code,
@@ -428,27 +463,49 @@ export const useStore = create<AppState>()(
             console.error("Error adding code snippet to Supabase:", error);
             throw error;
           }
+          
+          // Update local state
+          set({ codeSnippets: [...codeSnippets, newSnippet] });
         } catch (error) {
           console.error("Error in addCodeSnippet:", error);
+          throw error;
         }
-        
-        // Update local state
-        set({ codeSnippets: [...codeSnippets, newSnippet] });
       },
       
-      deleteCodeSnippet: (snippetId) => {
+      deleteCodeSnippet: async (snippetId) => {
         const { codeSnippets } = get();
-        set({
-          codeSnippets: codeSnippets.filter((snippet) => snippet.id !== snippetId),
-        });
+        
+        try {
+          // Delete from Supabase
+          const { error } = await supabase
+            .from('code_snippets')
+            .delete()
+            .eq('id', snippetId);
+            
+          if (error) {
+            console.error("Error deleting code snippet from Supabase:", error);
+            throw error;
+          }
+          
+          // Update local state
+          set({
+            codeSnippets: codeSnippets.filter((snippet) => snippet.id !== snippetId),
+          });
+        } catch (error) {
+          console.error("Error in deleteCodeSnippet:", error);
+          throw error;
+        }
       },
       
       addWriteUp: async (writeUpData) => {
         const { writeUps, currentUser } = get();
         if (!currentUser) return;
         
+        // Generate a unique ID
+        const newId = crypto.randomUUID();
+        
         const newWriteUp: WriteUp = {
-          id: Date.now().toString(),
+          id: newId,
           ...writeUpData,
           url: writeUpData.link,
           createdAt: new Date(),
@@ -459,7 +516,7 @@ export const useStore = create<AppState>()(
           const { error } = await supabase
             .from('write_ups')
             .insert({
-              id: newWriteUp.id,
+              id: newId,
               title: newWriteUp.title,
               description: newWriteUp.description || '',
               url: newWriteUp.url,
@@ -473,26 +530,49 @@ export const useStore = create<AppState>()(
             console.error("Error adding write-up to Supabase:", error);
             throw error;
           }
+          
+          // Update local state
+          set({ writeUps: [...writeUps, newWriteUp] });
         } catch (error) {
           console.error("Error in addWriteUp:", error);
+          throw error;
         }
-        
-        set({ writeUps: [...writeUps, newWriteUp] });
       },
       
-      deleteWriteUp: (writeUpId: string) => {
+      deleteWriteUp: async (writeUpId: string) => {
         const { writeUps } = get();
-        set({
-          writeUps: writeUps.filter((writeUp) => writeUp.id !== writeUpId),
-        });
+        
+        try {
+          // Delete from Supabase
+          const { error } = await supabase
+            .from('write_ups')
+            .delete()
+            .eq('id', writeUpId);
+            
+          if (error) {
+            console.error("Error deleting write-up from Supabase:", error);
+            throw error;
+          }
+          
+          // Update local state
+          set({
+            writeUps: writeUps.filter((writeUp) => writeUp.id !== writeUpId),
+          });
+        } catch (error) {
+          console.error("Error in deleteWriteUp:", error);
+          throw error;
+        }
       },
       
       addTestingTool: async (testingToolData) => {
         const { testingTools, currentUser } = get();
         if (!currentUser) return;
         
+        // Generate a unique ID
+        const newId = crypto.randomUUID();
+        
         const newTool: TestingTool = {
-          id: Date.now().toString(),
+          id: newId,
           ...testingToolData,
           content: testingToolData.code,
           createdAt: new Date(),
@@ -503,7 +583,7 @@ export const useStore = create<AppState>()(
           const { error } = await supabase
             .from('testing_tools')
             .insert({
-              id: newTool.id,
+              id: newId,
               title: newTool.title,
               description: newTool.description || '',
               code: newTool.code,
@@ -517,26 +597,49 @@ export const useStore = create<AppState>()(
             console.error("Error adding testing tool to Supabase:", error);
             throw error;
           }
+          
+          // Update local state
+          set({ testingTools: [...testingTools, newTool] });
         } catch (error) {
           console.error("Error in addTestingTool:", error);
+          throw error;
         }
-        
-        set({ testingTools: [...testingTools, newTool] });
       },
       
-      deleteTestingTool: (toolId: string) => {
+      deleteTestingTool: async (toolId: string) => {
         const { testingTools } = get();
-        set({
-          testingTools: testingTools.filter((tool) => tool.id !== toolId),
-        });
+        
+        try {
+          // Delete from Supabase
+          const { error } = await supabase
+            .from('testing_tools')
+            .delete()
+            .eq('id', toolId);
+            
+          if (error) {
+            console.error("Error deleting testing tool from Supabase:", error);
+            throw error;
+          }
+          
+          // Update local state
+          set({
+            testingTools: testingTools.filter((tool) => tool.id !== toolId),
+          });
+        } catch (error) {
+          console.error("Error in deleteTestingTool:", error);
+          throw error;
+        }
       },
       
       addCTFComponent: async (ctfComponentData) => {
         const { ctfComponents, currentUser } = get();
         if (!currentUser) return;
         
+        // Generate a unique ID
+        const newId = crypto.randomUUID();
+        
         const newComponent: CTFComponent = {
-          id: Date.now().toString(),
+          id: newId,
           ...ctfComponentData,
           createdAt: new Date(),
         };
@@ -546,7 +649,7 @@ export const useStore = create<AppState>()(
           const { error } = await supabase
             .from('ctf_components')
             .insert({
-              id: newComponent.id,
+              id: newId,
               title: newComponent.title,
               type: newComponent.type,
               content: newComponent.content,
@@ -558,26 +661,49 @@ export const useStore = create<AppState>()(
             console.error("Error adding CTF component to Supabase:", error);
             throw error;
           }
+          
+          // Update local state
+          set({ ctfComponents: [...ctfComponents, newComponent] });
         } catch (error) {
           console.error("Error in addCTFComponent:", error);
+          throw error;
         }
-        
-        set({ ctfComponents: [...ctfComponents, newComponent] });
       },
       
-      deleteCTFComponent: (componentId: string) => {
+      deleteCTFComponent: async (componentId: string) => {
         const { ctfComponents } = get();
-        set({
-          ctfComponents: ctfComponents.filter((component) => component.id !== componentId),
-        });
+        
+        try {
+          // Delete from Supabase
+          const { error } = await supabase
+            .from('ctf_components')
+            .delete()
+            .eq('id', componentId);
+            
+          if (error) {
+            console.error("Error deleting CTF component from Supabase:", error);
+            throw error;
+          }
+          
+          // Update local state
+          set({
+            ctfComponents: ctfComponents.filter((component) => component.id !== componentId),
+          });
+        } catch (error) {
+          console.error("Error in deleteCTFComponent:", error);
+          throw error;
+        }
       },
       
       addYoutubeChannel: async (channelData) => {
         const { youtubeChannels, currentUser } = get();
         if (!currentUser) return;
         
+        // Generate a unique ID
+        const newId = crypto.randomUUID();
+        
         const newChannel: YoutubeChannel = {
-          id: Date.now().toString(),
+          id: newId,
           ...channelData,
           createdAt: new Date(),
         };
@@ -587,7 +713,7 @@ export const useStore = create<AppState>()(
           const { error } = await supabase
             .from('youtube_channels')
             .insert({
-              id: newChannel.id,
+              id: newId,
               name: newChannel.name,
               url: newChannel.url,
               description: newChannel.description || '',
@@ -600,11 +726,13 @@ export const useStore = create<AppState>()(
             console.error("Error adding YouTube channel to Supabase:", error);
             throw error;
           }
+          
+          // Update local state
+          set({ youtubeChannels: [...youtubeChannels, newChannel] });
         } catch (error) {
           console.error("Error in addYoutubeChannel:", error);
+          throw error;
         }
-        
-        set({ youtubeChannels: [...youtubeChannels, newChannel] });
       },
       
       deleteYoutubeChannel: async (channelId: string) => {
@@ -785,13 +913,7 @@ export const useStore = create<AppState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         users: state.users,
-        posts: state.posts,
-        categories: state.categories,
-        codeSnippets: state.codeSnippets,
-        writeUps: state.writeUps,
-        testingTools: state.testingTools,
-        ctfComponents: state.ctfComponents,
-        youtubeChannels: state.youtubeChannels,
+        // We don't persist database data anymore as we fetch it from Supabase
       }),
     }
   )
