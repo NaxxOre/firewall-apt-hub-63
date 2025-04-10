@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   username: string;
@@ -13,14 +14,21 @@ export interface Post {
   title: string;
   content: string;
   authorId: string;
+  author_id?: string;
   authorName: string;
   createdAt: Date;
+  created_at?: string;
   isPublic: boolean;
+  is_public?: boolean;
   parentId?: string;
+  parent_id?: string;
   codeSnippet?: string;
+  code_snippet?: string;
   imageUrl?: string;
+  image_url?: string;
   imageUrls: string[];
   externalLink?: string;
+  external_link?: string;
   externalLinks: string[];
 }
 
@@ -37,9 +45,13 @@ export interface CodeSnippet {
   content: string;
   code: string;
   categoryId: string;
+  category_id?: string;
   description?: string;
   createdAt: Date;
+  created_at?: string;
   isPublic: boolean;
+  is_public?: boolean;
+  author_id?: string;
 }
 
 export interface WriteUp {
@@ -49,8 +61,12 @@ export interface WriteUp {
   link: string;
   description?: string;
   categoryId: string;
+  category_id?: string;
   createdAt: Date;
+  created_at?: string;
   isPublic: boolean;
+  is_public?: boolean;
+  author_id?: string;
 }
 
 export interface TestingTool {
@@ -60,8 +76,12 @@ export interface TestingTool {
   code: string;
   description?: string;
   categoryId: string;
+  category_id?: string;
   createdAt: Date;
+  created_at?: string;
   isPublic: boolean;
+  is_public?: boolean;
+  author_id?: string;
 }
 
 export interface CTFComponent {
@@ -70,7 +90,10 @@ export interface CTFComponent {
   type: 'link' | 'teamName' | 'password';
   content: string;
   createdAt: Date;
+  created_at?: string;
   isPublic: boolean;
+  is_public?: boolean;
+  author_id?: string;
 }
 
 export interface YoutubeChannel {
@@ -79,6 +102,10 @@ export interface YoutubeChannel {
   url: string;
   description?: string;
   thumbnailUrl?: string;
+  thumbnail_url?: string;
   createdAt: Date;
+  created_at?: string;
   isPublic: boolean;
+  is_public?: boolean;
+  author_id?: string;
 }

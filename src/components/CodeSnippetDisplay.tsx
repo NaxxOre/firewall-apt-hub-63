@@ -10,7 +10,8 @@ interface CodeSnippetDisplayProps {
 }
 
 const CodeSnippetDisplay: React.FC<CodeSnippetDisplayProps> = ({ snippet }) => {
-  const isPublic = snippet.is_public !== undefined ? snippet.is_public : snippet.isPublic;
+  // Use isPublic property from local types and handle database property is_public
+  const isPublic = snippet.isPublic !== undefined ? snippet.isPublic : snippet.is_public;
   
   return (
     <ContentCard title={snippet.title} isPublic={isPublic}>

@@ -31,12 +31,20 @@ export const addCodeSnippetToDb = async (snippetData: Omit<CodeSnippet, 'id' | '
     return null;
   }
   
+  // Convert camelCase properties to snake_case for database
+  const dbData = {
+    title: snippetData.title,
+    code: snippetData.code,
+    content: snippetData.content,
+    category_id: snippetData.categoryId,
+    description: snippetData.description || null,
+    is_public: snippetData.isPublic,
+    author_id: user.id
+  };
+  
   const { data, error } = await supabase
     .from('code_snippets')
-    .insert({
-      ...snippetData,
-      author_id: user.id
-    })
+    .insert(dbData)
     .select()
     .single();
     
@@ -104,12 +112,20 @@ export const addTestingToolToDb = async (toolData: Omit<TestingTool, 'id' | 'cre
     return null;
   }
   
+  // Convert camelCase properties to snake_case for database
+  const dbData = {
+    title: toolData.title,
+    code: toolData.code,
+    content: toolData.content,
+    category_id: toolData.categoryId,
+    description: toolData.description || null,
+    is_public: toolData.isPublic,
+    author_id: user.id
+  };
+  
   const { data, error } = await supabase
     .from('testing_tools')
-    .insert({
-      ...toolData,
-      author_id: user.id
-    })
+    .insert(dbData)
     .select()
     .single();
     
@@ -177,12 +193,20 @@ export const addWriteUpToDb = async (writeUpData: Omit<WriteUp, 'id' | 'createdA
     return null;
   }
   
+  // Convert camelCase properties to snake_case for database
+  const dbData = {
+    title: writeUpData.title,
+    url: writeUpData.url,
+    link: writeUpData.link,
+    category_id: writeUpData.categoryId,
+    description: writeUpData.description || null,
+    is_public: writeUpData.isPublic,
+    author_id: user.id
+  };
+  
   const { data, error } = await supabase
     .from('write_ups')
-    .insert({
-      ...writeUpData,
-      author_id: user.id
-    })
+    .insert(dbData)
     .select()
     .single();
     
@@ -250,12 +274,18 @@ export const addCTFComponentToDb = async (componentData: Omit<CTFComponent, 'id'
     return null;
   }
   
+  // Convert camelCase properties to snake_case for database
+  const dbData = {
+    title: componentData.title,
+    type: componentData.type,
+    content: componentData.content,
+    is_public: componentData.isPublic,
+    author_id: user.id
+  };
+  
   const { data, error } = await supabase
     .from('ctf_components')
-    .insert({
-      ...componentData,
-      author_id: user.id
-    })
+    .insert(dbData)
     .select()
     .single();
     
@@ -323,12 +353,19 @@ export const addYoutubeChannelToDb = async (channelData: Omit<YoutubeChannel, 'i
     return null;
   }
   
+  // Convert camelCase properties to snake_case for database
+  const dbData = {
+    name: channelData.name,
+    url: channelData.url,
+    description: channelData.description || null,
+    thumbnail_url: channelData.thumbnailUrl || null,
+    is_public: channelData.isPublic,
+    author_id: user.id
+  };
+  
   const { data, error } = await supabase
     .from('youtube_channels')
-    .insert({
-      ...channelData,
-      author_id: user.id
-    })
+    .insert(dbData)
     .select()
     .single();
     
@@ -405,18 +442,21 @@ export const addPostToDb = async (postData: Omit<Post, 'id' | 'createdAt' | 'aut
     
   const username = profiles?.username || user.email?.split('@')[0] || 'Anonymous';
   
+  // Convert camelCase properties to snake_case for database
+  const dbData = {
+    title: postData.title,
+    content: postData.content,
+    is_public: postData.isPublic,
+    parent_id: postData.parentId,
+    code_snippet: postData.codeSnippet,
+    image_url: postData.imageUrl,
+    external_link: postData.externalLink,
+    author_id: user.id
+  };
+  
   const { data, error } = await supabase
     .from('posts')
-    .insert({
-      title: postData.title,
-      content: postData.content,
-      is_public: postData.isPublic,
-      parent_id: postData.parentId,
-      code_snippet: postData.codeSnippet,
-      image_url: postData.imageUrl,
-      external_link: postData.externalLink,
-      author_id: user.id
-    })
+    .insert(dbData)
     .select()
     .single();
     

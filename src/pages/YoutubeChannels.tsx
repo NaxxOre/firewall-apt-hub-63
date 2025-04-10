@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 
 const YoutubeChannels = () => {
   const { currentUser, isAuthenticated } = useStore();
-  const [youtubeChannels, setYoutubeChannels] = useState([]);
+  const [youtubeChannels, setYoutubeChannels] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   
@@ -24,7 +24,15 @@ const YoutubeChannels = () => {
           
         if (error) throw error;
         
-        setYoutubeChannels(data || []);
+        // Transform channels to application format
+        const formattedChannels = data?.map(channel => ({
+          ...channel,
+          isPublic: channel.is_public,
+          thumbnailUrl: channel.thumbnail_url,
+          createdAt: new Date(channel.created_at)
+        })) || [];
+        
+        setYoutubeChannels(formattedChannels);
       } catch (error) {
         console.error('Error fetching YouTube channels:', error);
         toast.error('Failed to load YouTube channels');
@@ -38,9 +46,9 @@ const YoutubeChannels = () => {
   
   // Get visible channels based on user status
   const visibleChannels = youtubeChannels.filter(channel => {
-    if (!isAuthenticated) return channel.is_public;
+    if (!isAuthenticated) return channel.is_public || channel.isPublic;
     if (currentUser?.isAdmin) return true;
-    return channel.is_public;
+    return channel.is_public || channel.isPublic;
   });
 
   if (loading) {
@@ -90,10 +98,10 @@ const YoutubeChannels = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {visibleChannels.map((channel) => (
             <div key={channel.id} className="bg-card border border-border rounded-lg overflow-hidden">
-              {channel.thumbnail_url && (
+              {(channel.thumbnail_url || channel.thumbnailUrl) && (
                 <div className="aspect-video w-full overflow-hidden">
                   <img 
-                    src={channel.thumbnail_url} 
+                    src={channel.thumbnail_url || channel.thumbnailUrl} 
                     alt={channel.name}
                     className="w-full h-full object-cover"
                   />
@@ -111,7 +119,7 @@ const YoutubeChannels = () => {
                       id={channel.id}
                       title={channel.name}
                       type="youtube"
-                      isPublic={channel.is_public}
+                      isPublic={channel.isPublic || channel.is_public}
                     />
                   )}
                 </div>

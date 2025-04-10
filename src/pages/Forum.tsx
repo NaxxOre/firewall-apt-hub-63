@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 const Forum = () => {
   const { currentUser } = useStore();
   const navigate = useNavigate();
-  const [posts, setPosts] = useState([]);
+  const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
@@ -26,7 +26,20 @@ const Forum = () => {
           .order('created_at', { ascending: false });
           
         if (error) throw error;
-        setPosts(data || []);
+        
+        // Transform posts to application format
+        const formattedPosts = data?.map(post => ({
+          ...post,
+          isPublic: post.is_public,
+          parentId: post.parent_id,
+          codeSnippet: post.code_snippet,
+          imageUrl: post.image_url,
+          externalLink: post.external_link,
+          authorId: post.author_id,
+          createdAt: new Date(post.created_at)
+        })) || [];
+        
+        setPosts(formattedPosts);
       } catch (error) {
         console.error('Error fetching posts:', error);
         toast.error('Failed to load forum posts');
@@ -101,7 +114,7 @@ const Forum = () => {
           {posts.map((post) => (
             <div key={post.id} className={cn(
               "bg-card border border-border rounded-lg p-6",
-              !post.is_public && "opacity-70"
+              !post.is_public && !post.isPublic && "opacity-70"
             )}>
               <div className="flex justify-between items-start">
                 <Link to={`/forum/post/${post.id}`} className="block hover:underline">
@@ -113,7 +126,7 @@ const Forum = () => {
                     id={post.id}
                     title={post.title}
                     type="post"
-                    isPublic={post.is_public}
+                    isPublic={post.isPublic || post.is_public}
                   />
                 )}
               </div>
@@ -128,21 +141,21 @@ const Forum = () => {
               <p className="line-clamp-3 mb-4">{post.content}</p>
               
               <div className="flex flex-wrap gap-2 mb-4">
-                {post.image_url && (
+                {(post.image_url || post.imageUrl) && (
                   <div className="inline-flex items-center text-xs bg-secondary/50 px-2 py-1 rounded">
                     <Image size={12} className="mr-1" />
                     <span>Image</span>
                   </div>
                 )}
                 
-                {post.code_snippet && (
+                {(post.code_snippet || post.codeSnippet) && (
                   <div className="inline-flex items-center text-xs bg-secondary/50 px-2 py-1 rounded">
                     <Code size={12} className="mr-1" />
                     <span>Code</span>
                   </div>
                 )}
                 
-                {post.external_link && (
+                {(post.external_link || post.externalLink) && (
                   <div className="inline-flex items-center text-xs bg-secondary/50 px-2 py-1 rounded">
                     <ExternalLink size={12} className="mr-1" />
                     <span>Link</span>

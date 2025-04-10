@@ -19,9 +19,9 @@ import { toast } from 'sonner';
 
 const Category = () => {
   const { categoryId = '', sectionId = 'codes' } = useParams<{ categoryId: string; sectionId: string }>();
-  const [codeSnippets, setCodeSnippets] = useState([]);
-  const [writeUps, setWriteUps] = useState([]);
-  const [testingTools, setTestingTools] = useState([]);
+  const [codeSnippets, setCodeSnippets] = useState<any[]>([]);
+  const [writeUps, setWriteUps] = useState<any[]>([]);
+  const [testingTools, setTestingTools] = useState<any[]>([]);
   const { isAuthenticated, currentUser } = useStore();
   const [modalOpen, setModalOpen] = useState<{
     isOpen: boolean,
@@ -50,7 +50,16 @@ const Category = () => {
             .eq('category_id', category.id);
             
           if (snippetsError) throw snippetsError;
-          setCodeSnippets(snippetsData || []);
+          
+          // Transform snippets to application format
+          const formattedSnippets = snippetsData?.map(snippet => ({
+            ...snippet,
+            isPublic: snippet.is_public,
+            categoryId: snippet.category_id,
+            createdAt: new Date(snippet.created_at)
+          })) || [];
+          
+          setCodeSnippets(formattedSnippets);
           
           const { data: writeUpsData, error: writeUpsError } = await supabase
             .from('write_ups')
@@ -58,7 +67,16 @@ const Category = () => {
             .eq('category_id', category.id);
             
           if (writeUpsError) throw writeUpsError;
-          setWriteUps(writeUpsData || []);
+          
+          // Transform write-ups to application format
+          const formattedWriteUps = writeUpsData?.map(writeUp => ({
+            ...writeUp,
+            isPublic: writeUp.is_public,
+            categoryId: writeUp.category_id,
+            createdAt: new Date(writeUp.created_at)
+          })) || [];
+          
+          setWriteUps(formattedWriteUps);
           
           const { data: toolsData, error: toolsError } = await supabase
             .from('testing_tools')
@@ -66,7 +84,16 @@ const Category = () => {
             .eq('category_id', category.id);
             
           if (toolsError) throw toolsError;
-          setTestingTools(toolsData || []);
+          
+          // Transform testing tools to application format
+          const formattedTools = toolsData?.map(tool => ({
+            ...tool,
+            isPublic: tool.is_public,
+            categoryId: tool.category_id,
+            createdAt: new Date(tool.created_at)
+          })) || [];
+          
+          setTestingTools(formattedTools);
         }
       } catch (error) {
         console.error('Error loading category data:', error);
@@ -184,7 +211,7 @@ const Category = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {writeUps.map((writeUp) => (
-                  <ContentCard key={writeUp.id} title={writeUp.title} isPublic={writeUp.is_public}>
+                  <ContentCard key={writeUp.id} title={writeUp.title} isPublic={writeUp.isPublic || writeUp.is_public}>
                     <a 
                       href={writeUp.url} 
                       target="_blank" 
@@ -201,7 +228,7 @@ const Category = () => {
                         id={writeUp.id}
                         title={writeUp.title}
                         type="writeup"
-                        isPublic={writeUp.is_public}
+                        isPublic={writeUp.isPublic || writeUp.is_public}
                       />
                     </div>
                   </ContentCard>
@@ -260,6 +287,13 @@ const Category = () => {
     }
   };
   
+  const closeModalHandler = () => {
+    setModalOpen({
+      ...modalOpen,
+      isOpen: false
+    });
+  };
+  
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
@@ -274,7 +308,7 @@ const Category = () => {
       </div>
       
       {modalOpen.type === 'code' && (
-        <Dialog open={modalOpen.isOpen} onOpenChange={(isOpen) => setModalOpen({ ...modalOpen, isOpen })}>
+        <Dialog open={modalOpen.isOpen} onOpenChange={isOpen => setModalOpen({ ...modalOpen, isOpen })}>
           <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{modalOpen.title}</DialogTitle>
@@ -282,13 +316,13 @@ const Category = () => {
                 Add a new code snippet to the {category.name} category.
               </DialogDescription>
             </DialogHeader>
-            <AddCodeSnippet closeModal={() => setModalOpen({ ...modalOpen, isOpen: false })} />
+            <AddCodeSnippet closeModal={closeModalHandler} />
           </DialogContent>
         </Dialog>
       )}
       
       {modalOpen.type === 'tool' && (
-        <Dialog open={modalOpen.isOpen} onOpenChange={(isOpen) => setModalOpen({ ...modalOpen, isOpen })}>
+        <Dialog open={modalOpen.isOpen} onOpenChange={isOpen => setModalOpen({ ...modalOpen, isOpen })}>
           <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{modalOpen.title}</DialogTitle>
@@ -296,13 +330,13 @@ const Category = () => {
                 Add a new testing tool to the {category.name} category.
               </DialogDescription>
             </DialogHeader>
-            <AddTestingTool closeModal={() => setModalOpen({ ...modalOpen, isOpen: false })} />
+            <AddTestingTool closeModal={closeModalHandler} />
           </DialogContent>
         </Dialog>
       )}
       
       {modalOpen.type === 'writeup' && (
-        <Dialog open={modalOpen.isOpen} onOpenChange={(isOpen) => setModalOpen({ ...modalOpen, isOpen })}>
+        <Dialog open={modalOpen.isOpen} onOpenChange={isOpen => setModalOpen({ ...modalOpen, isOpen })}>
           <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{modalOpen.title}</DialogTitle>
@@ -312,7 +346,7 @@ const Category = () => {
             </DialogHeader>
             <AddContentModal 
               type="writeup" 
-              closeModal={() => setModalOpen({ ...modalOpen, isOpen: false })} 
+              onComplete={closeModalHandler}
             />
           </DialogContent>
         </Dialog>
