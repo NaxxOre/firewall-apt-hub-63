@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useStore } from '@/lib/store';
@@ -41,24 +40,8 @@ const Register = () => {
       if (authError) throw authError;
       
       if (authData?.user) {
-        // Then create a profile in our profiles table
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: authData.user.id,
-            username,
-            email,
-            is_admin: false,
-            is_approved: false,
-          });
-        
-        if (profileError) {
-          console.error("Profile creation error:", profileError);
-          // If there's an error creating the profile, we still continue because
-          // the auth.users trigger should handle profile creation as a fallback
-        }
-        
-        // Update local store for immediate UI feedback
+        // Profile creation should happen automatically via the database trigger now
+        // We just need to update local store for immediate UI feedback
         register(username, email, password);
         
         setShowAnimation(true);
