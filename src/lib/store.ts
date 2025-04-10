@@ -283,6 +283,8 @@ export const useStore = create<AppState>()(
             return;
           }
           
+          console.log("Pending users from Supabase:", data);
+          
           // Convert Supabase users to our User format
           const supabasePendingUsers = data.map(profile => ({
             id: profile.id,
@@ -342,6 +344,7 @@ export const useStore = create<AppState>()(
           
           if (error) {
             console.error("Error adding post to Supabase:", error);
+            throw error;
           }
         } catch (error) {
           console.error("Error in addPost:", error);
@@ -423,6 +426,7 @@ export const useStore = create<AppState>()(
           
           if (error) {
             console.error("Error adding code snippet to Supabase:", error);
+            throw error;
           }
         } catch (error) {
           console.error("Error in addCodeSnippet:", error);
@@ -439,15 +443,39 @@ export const useStore = create<AppState>()(
         });
       },
       
-      addWriteUp: (writeUp: Omit<WriteUp, 'id' | 'createdAt'>) => {
-        const { writeUps } = get();
+      addWriteUp: async (writeUpData) => {
+        const { writeUps, currentUser } = get();
+        if (!currentUser) return;
         
         const newWriteUp: WriteUp = {
           id: Date.now().toString(),
-          ...writeUp,
-          url: writeUp.link,
+          ...writeUpData,
+          url: writeUpData.link,
           createdAt: new Date(),
         };
+        
+        // Store in Supabase
+        try {
+          const { error } = await supabase
+            .from('write_ups')
+            .insert({
+              id: newWriteUp.id,
+              title: newWriteUp.title,
+              description: newWriteUp.description || '',
+              url: newWriteUp.url,
+              link: newWriteUp.link,
+              category_id: newWriteUp.categoryId,
+              author_id: currentUser.id,
+              is_public: newWriteUp.isPublic
+            });
+          
+          if (error) {
+            console.error("Error adding write-up to Supabase:", error);
+            throw error;
+          }
+        } catch (error) {
+          console.error("Error in addWriteUp:", error);
+        }
         
         set({ writeUps: [...writeUps, newWriteUp] });
       },
@@ -459,15 +487,39 @@ export const useStore = create<AppState>()(
         });
       },
       
-      addTestingTool: (testingTool: Omit<TestingTool, 'id' | 'createdAt'>) => {
-        const { testingTools } = get();
+      addTestingTool: async (testingToolData) => {
+        const { testingTools, currentUser } = get();
+        if (!currentUser) return;
         
         const newTool: TestingTool = {
           id: Date.now().toString(),
-          ...testingTool,
-          content: testingTool.code,
+          ...testingToolData,
+          content: testingToolData.code,
           createdAt: new Date(),
         };
+        
+        // Store in Supabase
+        try {
+          const { error } = await supabase
+            .from('testing_tools')
+            .insert({
+              id: newTool.id,
+              title: newTool.title,
+              description: newTool.description || '',
+              code: newTool.code,
+              content: newTool.content,
+              category_id: newTool.categoryId,
+              author_id: currentUser.id,
+              is_public: newTool.isPublic
+            });
+          
+          if (error) {
+            console.error("Error adding testing tool to Supabase:", error);
+            throw error;
+          }
+        } catch (error) {
+          console.error("Error in addTestingTool:", error);
+        }
         
         set({ testingTools: [...testingTools, newTool] });
       },
@@ -479,14 +531,36 @@ export const useStore = create<AppState>()(
         });
       },
       
-      addCTFComponent: (ctfComponent: Omit<CTFComponent, 'id' | 'createdAt'>) => {
-        const { ctfComponents } = get();
+      addCTFComponent: async (ctfComponentData) => {
+        const { ctfComponents, currentUser } = get();
+        if (!currentUser) return;
         
         const newComponent: CTFComponent = {
           id: Date.now().toString(),
-          ...ctfComponent,
+          ...ctfComponentData,
           createdAt: new Date(),
         };
+        
+        // Store in Supabase
+        try {
+          const { error } = await supabase
+            .from('ctf_components')
+            .insert({
+              id: newComponent.id,
+              title: newComponent.title,
+              type: newComponent.type,
+              content: newComponent.content,
+              author_id: currentUser.id,
+              is_public: newComponent.isPublic
+            });
+          
+          if (error) {
+            console.error("Error adding CTF component to Supabase:", error);
+            throw error;
+          }
+        } catch (error) {
+          console.error("Error in addCTFComponent:", error);
+        }
         
         set({ ctfComponents: [...ctfComponents, newComponent] });
       },
@@ -498,23 +572,39 @@ export const useStore = create<AppState>()(
         });
       },
       
-      addYoutubeChannel: (channel: Omit<YoutubeChannel, 'id' | 'createdAt'>) => {
-        const { youtubeChannels } = get();
+      addYoutubeChannel: async (channelData) => {
+        const { youtubeChannels, currentUser } = get();
+        if (!currentUser) return;
         
         const newChannel: YoutubeChannel = {
           id: Date.now().toString(),
-          ...channel,
+          ...channelData,
           createdAt: new Date(),
         };
         
+        // Store in Supabase
+        try {
+          const { error } = await supabase
+            .from('youtube_channels')
+            .insert({
+              id: newChannel.id,
+              name: newChannel.name,
+              url: newChannel.url,
+              description: newChannel.description || '',
+              thumbnail_url: newChannel.thumbnailUrl,
+              author_id: currentUser.id,
+              is_public: newChannel.isPublic
+            });
+          
+          if (error) {
+            console.error("Error adding YouTube channel to Supabase:", error);
+            throw error;
+          }
+        } catch (error) {
+          console.error("Error in addYoutubeChannel:", error);
+        }
+        
         set({ youtubeChannels: [...youtubeChannels, newChannel] });
-      },
-      
-      deleteYoutubeChannel: (channelId: string) => {
-        const { youtubeChannels } = get();
-        set({
-          youtubeChannels: youtubeChannels.filter((channel) => channel.id !== channelId),
-        });
       },
       
       // Updates for visibility toggles

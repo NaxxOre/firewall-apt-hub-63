@@ -37,12 +37,15 @@ const AdminPanel = () => {
     type: 'writeup',
     title: ''
   });
+  const [loading, setLoading] = useState(false);
+  const [dbPendingUsers, setDbPendingUsers] = useState<any[]>([]);
   
   const navigate = useNavigate();
 
   // Sync pending users when admin panel loads
   useEffect(() => {
     if (currentUser?.isAdmin) {
+      setLoading(true);
       syncPendingUsers();
       
       // Also fetch directly from Supabase for most up-to-date data
@@ -54,10 +57,14 @@ const AdminPanel = () => {
           
         if (error) {
           console.error("Error fetching pending users:", error);
+          toast.error("Error loading pending users");
+          setLoading(false);
           return;
         }
         
         console.log("Pending users from Supabase:", data);
+        setDbPendingUsers(data || []);
+        setLoading(false);
       };
       
       fetchPendingUsers();
@@ -78,14 +85,103 @@ const AdminPanel = () => {
     );
   }
 
-  const handleApproveUser = (userId: string) => {
-    approveUser(userId);
-    toast.success('User approved');
+  // Combine local pending users with those fetched directly from DB
+  const allPendingUsers = [...pendingUsers];
+  // Add DB users that aren't already in the local state
+  dbPendingUsers.forEach(dbUser => {
+    if (!allPendingUsers.some(localUser => localUser.id === dbUser.id)) {
+      allPendingUsers.push({
+        id: dbUser.id,
+        username: dbUser.username,
+        email: dbUser.email,
+        password: '',
+        isAdmin: dbUser.is_admin,
+        isApproved: false,
+        createdAt: new Date(dbUser.created_at)
+      });
+    }
+  });
+
+  const handleApproveUser = async (userId: string) => {
+    try {
+      setLoading(true);
+      
+      // First update in Supabase directly
+      if (!userId.startsWith('pending_')) {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ is_approved: true })
+          .eq('id', userId);
+          
+        if (error) {
+          console.error("Error approving user in Supabase:", error);
+          toast.error("Failed to approve user");
+          setLoading(false);
+          return;
+        }
+      }
+      
+      // Then update local state via store function
+      await approveUser(userId);
+      toast.success('User approved');
+      
+      // Refresh the list
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('is_approved', false);
+        
+      if (!error && data) {
+        setDbPendingUsers(data);
+      }
+      
+      setLoading(false);
+    } catch (error) {
+      console.error("Error in handleApproveUser:", error);
+      toast.error("An error occurred while approving the user");
+      setLoading(false);
+    }
   };
 
-  const handleRejectUser = (userId: string) => {
-    rejectUser(userId);
-    toast.success('User rejected');
+  const handleRejectUser = async (userId: string) => {
+    try {
+      setLoading(true);
+      
+      // First update in Supabase directly if it's a Supabase user
+      if (!userId.startsWith('pending_')) {
+        const { error } = await supabase
+          .from('profiles')
+          .delete()
+          .eq('id', userId);
+          
+        if (error) {
+          console.error("Error rejecting user in Supabase:", error);
+          toast.error("Failed to reject user");
+          setLoading(false);
+          return;
+        }
+      }
+      
+      // Then update local state
+      rejectUser(userId);
+      toast.success('User rejected');
+      
+      // Refresh the list
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('is_approved', false);
+        
+      if (!error && data) {
+        setDbPendingUsers(data);
+      }
+      
+      setLoading(false);
+    } catch (error) {
+      console.error("Error in handleRejectUser:", error);
+      toast.error("An error occurred while rejecting the user");
+      setLoading(false);
+    }
   };
 
   const openModal = (type: 'writeup' | 'youtube' | 'ctf' | 'code' | 'tool', title: string) => {
@@ -118,9 +214,9 @@ const AdminPanel = () => {
               >
                 <Users size={18} className="mr-3" />
                 <span>User Management</span>
-                {pendingUsers.length > 0 && (
+                {allPendingUsers.length > 0 && (
                   <span className="ml-auto bg-primary text-white text-xs py-0.5 px-2 rounded-full">
-                    {pendingUsers.length}
+                    {allPendingUsers.length}
                   </span>
                 )}
               </button>
@@ -144,7 +240,11 @@ const AdminPanel = () => {
               <div>
                 <h2 className="text-xl font-bold mb-4">User Approval Requests</h2>
                 
-                {pendingUsers.length === 0 ? (
+                {loading ? (
+                  <div className="bg-card border border-border rounded-lg p-6 text-center">
+                    <p className="text-muted-foreground">Loading pending users...</p>
+                  </div>
+                ) : allPendingUsers.length === 0 ? (
                   <div className="bg-card border border-border rounded-lg p-6 text-center">
                     <p className="text-muted-foreground">No pending approval requests</p>
                   </div>
@@ -160,7 +260,7 @@ const AdminPanel = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {pendingUsers.map((user) => (
+                        {allPendingUsers.map((user) => (
                           <tr key={user.id} className="border-b border-border">
                             <td className="py-3 px-4">{user.username}</td>
                             <td className="py-3 px-4">{user.email}</td>
@@ -172,14 +272,16 @@ const AdminPanel = () => {
                                 <button
                                   onClick={() => handleApproveUser(user.id)}
                                   className="bg-green-900/30 hover:bg-green-900/50 text-green-400 px-3 py-1 rounded text-sm"
+                                  disabled={loading}
                                 >
-                                  Approve
+                                  {loading ? 'Processing...' : 'Approve'}
                                 </button>
                                 <button
                                   onClick={() => handleRejectUser(user.id)}
                                   className="bg-primary/30 hover:bg-primary/40 text-primary px-3 py-1 rounded text-sm"
+                                  disabled={loading}
                                 >
-                                  Reject
+                                  {loading ? 'Processing...' : 'Reject'}
                                 </button>
                               </div>
                             </td>

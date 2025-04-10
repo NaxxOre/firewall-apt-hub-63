@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar, User, MessageSquare, ExternalLink, Code, Image } from 'lucide-react';
 import ContentActions from '@/components/ContentActions';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const Forum = () => {
   const { posts: localPosts, currentUser } = useStore();
@@ -22,12 +23,13 @@ const Forum = () => {
         // First try to fetch from Supabase
         const { data, error } = await supabase
           .from('posts')
-          .select('*, profiles:author_id(username)')
+          .select('*, profiles(username)')
           .filter('parent_id', 'is', null)
           .order('created_at', { ascending: false });
         
         if (error) {
           console.error("Error fetching posts from Supabase:", error);
+          toast.error("Error loading posts. Falling back to local data.");
           // Fallback to local posts
           setPosts(localPosts.filter(post => !post.parentId));
         } else if (data && data.length > 0) {
@@ -37,7 +39,7 @@ const Forum = () => {
             title: post.title,
             content: post.content,
             authorId: post.author_id,
-            authorName: post.profiles?.username || 'Unknown', // Get username from the joined profiles table
+            authorName: post.profiles?.username || 'Unknown',
             isPublic: post.is_public,
             createdAt: new Date(post.created_at),
             parentId: post.parent_id,
@@ -76,9 +78,9 @@ const Forum = () => {
       // Using Promise.all to fetch counts for all posts in parallel
       await Promise.all(
         postIds.map(async (postId) => {
-          const { data, error, count } = await supabase
+          const { count, error } = await supabase
             .from('posts')
-            .select('id', { count: 'exact' })
+            .select('*', { count: 'exact', head: true })
             .eq('parent_id', postId);
           
           if (error) {

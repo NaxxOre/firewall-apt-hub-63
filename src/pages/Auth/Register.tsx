@@ -52,7 +52,11 @@ const Register = () => {
             is_approved: false,
           });
         
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error("Profile creation error:", profileError);
+          // If there's an error creating the profile, we still continue because
+          // the auth.users trigger should handle profile creation as a fallback
+        }
         
         // Update local store for immediate UI feedback
         register(username, email, password);
