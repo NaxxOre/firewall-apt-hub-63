@@ -15,6 +15,8 @@ interface ContentActionsProps {
   isPublic: boolean;
 }
 
+type TableName = 'code_snippets' | 'write_ups' | 'testing_tools' | 'posts' | 'youtube_channels' | 'ctf_components';
+
 const ContentActions: React.FC<ContentActionsProps> = ({ id, title, type, isPublic }) => {
   const { currentUser } = useStore();
   const [updating, setUpdating] = useState(false);
@@ -29,30 +31,29 @@ const ContentActions: React.FC<ContentActionsProps> = ({ id, title, type, isPubl
   // Check if we're in a category page and if it's a protected category
   const isProtectedCategory = categoryId && protectedCategories.includes(categoryId);
 
+  // Helper function to get the correct table name
+  const getTableName = (type: string): TableName => {
+    switch (type) {
+      case 'code':
+        return 'code_snippets';
+      case 'writeup':
+        return 'write_ups';
+      case 'tool':
+        return 'testing_tools';
+      case 'post':
+        return 'posts';
+      case 'youtube':
+        return 'youtube_channels';
+      case 'ctf':
+        return 'ctf_components';
+      default:
+        throw new Error(`Invalid content type: ${type}`);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     try {
-      let table = '';
-      
-      switch (type) {
-        case 'code':
-          table = 'code_snippets';
-          break;
-        case 'writeup':
-          table = 'write_ups';
-          break;
-        case 'tool':
-          table = 'testing_tools';
-          break;
-        case 'post':
-          table = 'posts';
-          break;
-        case 'youtube':
-          table = 'youtube_channels';
-          break;
-        case 'ctf':
-          table = 'ctf_components';
-          break;
-      }
+      const table = getTableName(type);
       
       const { error } = await supabase
         .from(table)
@@ -74,28 +75,7 @@ const ContentActions: React.FC<ContentActionsProps> = ({ id, title, type, isPubl
   const handleVisibilityChange = async (value: boolean) => {
     try {
       setUpdating(true);
-      let table = '';
-      
-      switch (type) {
-        case 'code':
-          table = 'code_snippets';
-          break;
-        case 'writeup':
-          table = 'write_ups';
-          break;
-        case 'tool':
-          table = 'testing_tools';
-          break;
-        case 'post':
-          table = 'posts';
-          break;
-        case 'youtube':
-          table = 'youtube_channels';
-          break;
-        case 'ctf':
-          table = 'ctf_components';
-          break;
-      }
+      const table = getTableName(type);
       
       const { error } = await supabase
         .from(table)

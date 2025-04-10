@@ -13,37 +13,42 @@ import AddYouTubeChannel from './AddYouTubeChannel';
 import AddCTFComponent from './AddCTFComponent';
 
 interface AddContentModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   type: 'writeup' | 'youtube' | 'ctf';
-  title: string;
+  title?: string;
+  closeModal?: () => void;
+  onComplete?: () => void;
 }
 
-const AddContentModal = ({ open, onOpenChange, type, title }: AddContentModalProps) => {
-  const closeModal = () => onOpenChange(false);
+const AddContentModal = ({ 
+  open, 
+  onOpenChange, 
+  type, 
+  title = "Add Content", 
+  closeModal, 
+  onComplete
+}: AddContentModalProps) => {
+  const handleClose = () => {
+    if (closeModal) closeModal();
+    if (onComplete) onComplete();
+    if (onOpenChange) onOpenChange(false);
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-hidden">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>
-            Fill in the details below to add new content.
-          </DialogDescription>
-        </DialogHeader>
-        <ScrollArea className="max-h-[70vh] pr-4 overflow-y-auto">
-          {type === 'writeup' && (
-            <AddCategoryContent type="writeup" closeModal={closeModal} />
-          )}
-          {type === 'youtube' && (
-            <AddYouTubeChannel closeModal={closeModal} />
-          )}
-          {type === 'ctf' && (
-            <AddCTFComponent closeModal={closeModal} />
-          )}
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
+    <>
+      <ScrollArea className="max-h-[70vh] pr-4 overflow-y-auto">
+        {type === 'writeup' && (
+          <AddCategoryContent type="writeup" closeModal={handleClose} />
+        )}
+        {type === 'youtube' && (
+          <AddYouTubeChannel closeModal={handleClose} />
+        )}
+        {type === 'ctf' && (
+          <AddCTFComponent closeModal={handleClose} />
+        )}
+      </ScrollArea>
+    </>
   );
 };
 

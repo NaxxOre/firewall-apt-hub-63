@@ -2,13 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
-import { Copy, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import AddContentModal from '@/components/AddContentModal';
-import { copyToClipboard } from '@/lib/utils';
 import { toast } from 'sonner';
 import ContentActions from '@/components/ContentActions';
 import { supabase } from '@/integrations/supabase/client';
+import CopyButton from '@/components/CopyButton';
 
 const CTF = () => {
   const { currentUser } = useStore();
@@ -45,11 +44,6 @@ const CTF = () => {
     
     fetchCTFComponents();
   }, []);
-
-  const handleCopy = (content: string) => {
-    copyToClipboard(content);
-    toast.success('Copied to clipboard');
-  };
 
   if (loading) {
     return (
@@ -103,14 +97,9 @@ const CTF = () => {
               
               <div className="bg-background rounded-md p-3 font-mono text-sm relative mb-4">
                 <code>{component.content}</code>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="absolute top-2 right-2 h-6 w-6"
-                  onClick={() => handleCopy(component.content)}
-                >
-                  <Copy size={12} />
-                </Button>
+                <div className="absolute top-2 right-2">
+                  <CopyButton content={component.content} />
+                </div>
               </div>
               
               <p className="text-xs text-muted-foreground">
@@ -142,10 +131,12 @@ const CTF = () => {
               Add a new CTF component to your collection.
             </DialogDescription>
           </DialogHeader>
-          <AddContentModal 
-            type="ctf" 
-            onComplete={() => setModalOpen(false)}
-          />
+          <div>
+            {/* We need to update AddContentModal in the next step to accept these props */}
+            {modalOpen && (
+              <div id="ctf-component-form-container"></div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
