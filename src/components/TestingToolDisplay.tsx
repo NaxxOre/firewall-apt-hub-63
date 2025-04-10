@@ -10,13 +10,10 @@ interface TestingToolDisplayProps {
 }
 
 const TestingToolDisplay: React.FC<TestingToolDisplayProps> = ({ tool }) => {
-  // Use isPublic property from local types and handle database property is_public
-  const isPublic = tool.isPublic !== undefined ? tool.isPublic : tool.is_public;
-  
   return (
-    <ContentCard title={tool.title} isPublic={isPublic}>
+    <ContentCard title={tool.title} isPublic={tool.isPublic}>
       <div className="mb-3">
-        <CodeDisplayBox content={tool.content || tool.code} maxHeight="300px" />
+        <CodeDisplayBox content={tool.content} maxHeight="300px" />
       </div>
       {tool.description && (
         <p className="text-sm text-muted-foreground mt-2 mb-3">{tool.description}</p>
@@ -26,7 +23,7 @@ const TestingToolDisplay: React.FC<TestingToolDisplayProps> = ({ tool }) => {
           id={tool.id}
           title={tool.title}
           type="tool"
-          isPublic={isPublic}
+          isPublic={tool.isPublic}
         />
       </div>
     </ContentCard>

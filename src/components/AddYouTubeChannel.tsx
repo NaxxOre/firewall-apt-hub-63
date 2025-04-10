@@ -10,8 +10,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
 
 interface AddYouTubeChannelProps {
   closeModal?: () => void;
@@ -26,8 +24,7 @@ const formSchema = z.object({
 });
 
 const AddYouTubeChannel: React.FC<AddYouTubeChannelProps> = ({ closeModal }) => {
-  const { currentUser } = useStore();
-  const navigate = useNavigate();
+  const { addYoutubeChannel, currentUser } = useStore();
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -40,38 +37,19 @@ const AddYouTubeChannel: React.FC<AddYouTubeChannelProps> = ({ closeModal }) => 
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
     try {
-      const session = await supabase.auth.getSession();
-      
-      if (!session.data.session) {
-        toast.error('You must be logged in to add a YouTube channel');
-        navigate('/login');
-        return;
-      }
-      
-      const { error } = await supabase.from('youtube_channels').insert({
+      addYoutubeChannel({
         name: values.name,
         url: values.url,
-        description: values.description || null,
-        thumbnail_url: values.thumbnailUrl || null,
-        is_public: values.isPublic,
-        author_id: session.data.session.user.id
+        description: values.description || undefined,
+        thumbnailUrl: values.thumbnailUrl || undefined,
+        isPublic: currentUser?.isAdmin ? values.isPublic : true,
       });
-      
-      if (error) {
-        throw error;
-      }
       
       toast.success('YouTube channel added successfully');
       form.reset();
-      
-      if (closeModal) {
-        closeModal();
-      } else {
-        // Redirect to the YouTube channels page
-        window.location.href = '/youtube-channels';
-      }
+      if (closeModal) closeModal();
     } catch (error) {
       console.error('Error adding YouTube channel:', error);
       toast.error('Failed to add channel. Please try again.');
@@ -137,26 +115,28 @@ const AddYouTubeChannel: React.FC<AddYouTubeChannelProps> = ({ closeModal }) => 
           )}
         />
         
-        <FormField
-          control={form.control}
-          name="isPublic"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-              <div className="space-y-0.5">
-                <FormLabel className="text-base">Visibility</FormLabel>
-                <FormDescription>
-                  Make this channel visible to all users
-                </FormDescription>
-              </div>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
+        {currentUser?.isAdmin && (
+          <FormField
+            control={form.control}
+            name="isPublic"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">Visibility</FormLabel>
+                  <FormDescription>
+                    Make this channel visible to all users
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        )}
         
         <Button type="submit" className="w-full">Add YouTube Channel</Button>
       </form>
